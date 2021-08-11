@@ -2,6 +2,8 @@ Require Import Coq.Lists.List.
 Require Import Toy.Imp.
 Open Scope Z.
 
+Module Denote_State.
+
 Definition var : Type := nat.
 
 Definition store : Type := var -> Z.
@@ -11,6 +13,10 @@ Definition addr : Type := Z.
 Definition heap : Type := addr -> option Z.
 
 Definition state : Type := store * heap.
+
+End Denote_State.
+
+Import Denote_State.
 
 Inductive aexp : Type :=
   | ANum (n : Z)
@@ -54,6 +60,7 @@ Definition div {A : Type} (f g : A -> option Z) : A -> option Z :=
 End OptF.
 
 Module Denote_Aexp.
+Import Denote_State.
 
 Fixpoint aeval (a : aexp) : store -> option Z :=
   match a with
@@ -280,3 +287,5 @@ Fixpoint ceval (c : com) : com_denote :=
   | CIf b c1 c2 => if_sem (beval b) (ceval c1) (ceval c2)
   | CFor c1 c2 => for_sem (ceval c1) (ceval c2)
   end.
+
+End Denote_Com.
