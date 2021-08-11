@@ -39,3 +39,5 @@ Definition valid (P : Assertion) (c : com) (Q Rb Rc : Assertion) : Prop :=
     (com_normal (ceval c) st1 st2 -> Q st2) /\
     (com_break (ceval c) st1 st2 -> Rb st2) /\
     (com_cont (ceval c) st1 st2 -> Rc st2).
+
+End Validity.
