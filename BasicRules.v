@@ -152,3 +152,49 @@ Proof.
       specialize (HF st1 st2); tauto.
 Qed.
 
+Theorem hoare_for_sound : forall P P' Q c ci,
+  valid P c P' Q P' ->
+  valid P' ci P falsep falsep ->
+  valid P (CFor c ci) Q falsep falsep.
+Proof.
+  intros P P' Q c ci Hlb Hinc.
+  unfold valid in *.
+  intros st1 st2 HP.
+  split; try split; try split.
+  + unfold not; intros.
+    simpl in H; destruct H as [n ?].
+    revert st1 HP H; induction n.
+    - intros st1 HP H.
+      simpl in H. destruct H.
+      * specialize (Hlb st1 st2); tauto.
+      * destruct H as [st' ?].
+        specialize (Hlb st1 st'); specialize (Hinc st' st2); tauto.
+    - intros st1 HP H.
+      simpl in H.
+      destruct H as [st3 [[? | ?] ?]].
+      * destruct H as [st4 [? ?]].
+        specialize (Hlb st1 st4); specialize (Hinc st4 st3).
+        specialize (IHn st3); tauto.
+      * destruct H as [st4 [? ?]].
+        specialize (Hlb st1 st4); specialize (Hinc st4 st3).
+        specialize (IHn st3); tauto.
+  + intros Hc.
+    simpl in Hc; destruct Hc as [n Hc].
+    revert st1 HP Hc; induction n.
+    - intros st1 HP H.
+      simpl in H; destruct H as [? | [st3 ?]].
+      * specialize (Hlb st1 st2); tauto.
+      * specialize (Hlb st1 st3); specialize (Hinc st3 st2); tauto.
+    - intros st1 HP H.
+      simpl in H; destruct H as [st3 [[[st4 [? ?]] | [st4 [? ?]]] ?]].
+      * specialize (Hlb st1 st4); specialize (Hinc st4 st3).
+        specialize (IHn st3); tauto.
+      * specialize (Hlb st1 st4); specialize (Hinc st4 st3).
+        specialize (IHn st3); tauto.
+  + simpl; tauto.
+  + simpl; tauto.
+Qed. 
+        
+
+
+

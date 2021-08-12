@@ -258,12 +258,14 @@ Fixpoint iter_loop_body (DC1 DC2 : com_denote) (n : nat) : com_denote :=
         (exists st', com_normal DC1 st st' /\ com_error DC2 st') |}
   | S n' => {|
       com_normal := fun st1 st2 => exists st3,
-        ((com_normal (seq_sem DC1 DC2) st1 st3) \/ (com_cont (seq_sem DC1 DC2) st1 st3)) /\
+        ((exists st4, com_normal DC1 st1 st4 /\ com_normal DC2 st4 st3) \/
+        (exists st4, com_cont DC1 st1 st4 /\ com_normal DC2 st4 st3)) /\
         (com_normal (iter_loop_body DC1 DC2 n') st3 st2);
       com_break := fun st1 st2 => False;
       com_cont := fun st1 st2 => False;
       com_error := fun st => exists st',
-        ((com_normal (seq_sem DC1 DC2) st st') \/ (com_cont (seq_sem DC1 DC2) st st')) /\
+        ((exists st2, com_normal DC1 st st2 /\ com_normal DC2 st2 st') \/
+        (exists st2, com_cont DC1 st st2 /\ com_normal DC2 st2 st')) /\
         (com_error (iter_loop_body DC1 DC2 n') st') |}
   end.
 
