@@ -250,133 +250,131 @@ Proof.
 Qed.
 
 Theorem hoare_load_sound : forall P X e p v,
-  derives P (andp (eqp e p) (storesv p v)) ->
-  valid (andp P (safea e)) (CAss_load X e) (andp (eqp (AId X) v) (exp (subst_load P X))) falsep falsep.
+  derives P (andp (eqp e p) (mapsto p v)) ->
+  valid P (CAss_load X e) (andp (eqp (AId X) v) (exp (subst_load P X))) falsep falsep.
 Proof.
-  unfold valid. intros.
-  unfold derives, andp, eqp, storesv in H.
-  unfold andp, safea in H0. destruct H0.
-  specialize (H st1 H0). destruct H.
+  unfold valid; intros.
+  unfold derives, andp, eqp, mapsto in H.
+  specialize (H st1 H0).
+  destruct H as [? [? ?]].
   split.
-  { unfold not; intros. simpl in H3.
-    destruct (aeval e (fst st1)); try tauto.
-    inversion H; subst. rewrite H2 in H3; inversion H3. }
+  { unfold not; intros.
+    simpl in H3.
+    rewrite H, H1 in H3. inversion H3. }
   split.
   { intros.
-    unfold andp, eqp, exp, subst_load.
+    unfold andp, eqp, exp; simpl.
     split.
-    + simpl in *.
-      destruct (aeval e (fst st1)); try tauto.
-      destruct H3. inversion H; subst.
-      rewrite H3. tauto. 
-    + exists ((fst st1) X).
-      remember (store_update (fst st2) X (Some (fst st1 X))) as s'.
-      assert (forall X, s' X = (fst st1) X).
-      { intros Y. 
-        subst s'. unfold store_update.
-        destruct (Nat.eq_dec Y X).
-        - rewrite e0; tauto.
-        - simpl in H3.
-          destruct (aeval e (fst st1)); try tauto.
-          destruct H3 as [? [? ?]].
-          specialize (H4 Y n). tauto. }
-      assert (s' = fst st1).
-      { eapply FunctionalExtensionality.functional_extensionality_dep.
-        tauto. }
-      rewrite H5.
-      simpl in H3.
-      destruct (aeval e (fst st1)); try tauto.
+    + simpl in H3.
+      rewrite H in H3.
       destruct H3 as [? [? ?]].
-      rewrite <- H7.
+      rewrite H3; tauto.
+    + simpl in H3.
+      rewrite H in H3.
+      destruct H3 as [? [? ?]].
+      exists ((fst st1) X).
+      unfold subst_load.
+      remember (store_update (fst st2) X (Some (fst st1 X))) as s'.
+      assert (forall Y, s' Y = fst st1 Y).
+      { intros. subst s'; unfold store_update.
+        destruct (Nat.eq_dec Y X).
+        + rewrite e0; tauto.
+        + specialize (H4 Y n); tauto. }
+      assert (s' = fst st1).
+      { eapply FunctionalExtensionality.functional_extensionality_dep. tauto. }
+      rewrite H7, <-H5.
       destruct st1.
-      unfold fst, snd. tauto. }
+      unfold fst, snd; tauto. }
   split; simpl; tauto.
 Qed.
 
 Theorem hoare_store_sound : forall P e1 e2 p v,
   derives P (andp (eqp e1 p) (eqp e2 v)) ->
-  valid (andp (sepcon P (saferef p)) (andp (safea e1) (safea e2))) (CAss_store e1 e2) (sepcon P (storesv p v)) falsep falsep.
+  valid (sepcon P (mapsto_ p)) (CAss_store e1 e2) (sepcon P (mapsto p v)) falsep falsep.
 Proof.
   unfold valid; intros.
   unfold derives, andp, eqp in H.
-  unfold andp, sepcon, saferef, safea in H0.   
-  destruct H0 as [[st11 [st12 ?]] [? ?]].
-  destruct H0 as [? [? ?]].
+  unfold andp, sepcon, mapsto_ in H0.
+  destruct H0 as [st11 [st12 [? [? [? ?]]]]].
   split.
   { unfold not; intros.
-    simpl in H5.
-    pose proof (H st11 H3).
-    destruct H6.
     unfold join in H0.
     destruct H0 as [? [? ?]].
-    rewrite H0 in H6, H7.
-    rewrite H8 in H6, H7.
-    rewrite H6, H7 in H5.
-    unfold join_heap in H9.
-    specialize (H9 p).
-    destruct H9 as [? | [? | ?]].
-    + destruct H9 as [p0 ?]. tauto.
-    + destruct H9 as [p0 ?]. destruct H9 as [? [? ?]].
-      rewrite H11 in H5. inversion H5.
-    + tauto. }
-  split.
-  { intros. 
-    unfold sepcon.
-    remember (fst st12, heap_update (snd st12) p (Some v)) as st22.
-    exists st11, st22.
-    simpl in H5.
-    unfold join in H0.
-    destruct H0 as [? [? ?]].
-    specialize (H st11 H3).
+    specialize (H st11 H1).
     destruct H.
+    rewrite H0, H5 in H.
+    rewrite H0, H5 in H7.
+    simpl in H4.
+    rewrite H, H7 in H4.
+    destruct H2 as [v0 ?].
+    unfold join_heap in H6.
+    specialize (H6 p).
+    destruct H6 as [? | [? | ?]].
+    + destruct H6 as [? [? [? ?]]]. rewrite H9 in H4; inversion H4. 
+    + destruct H6 as [? [? [? ?]]]. rewrite H9 in H4; inversion H4.
+    + destruct H6 as [? [? ?]].
+      rewrite H8 in H2; inversion H2. }
+  split.
+  { intros.
+    specialize (H st11 H1).
+    destruct H.
+    unfold join in H0.
+    destruct H0 as [? [? ?]].
     rewrite H0, H6 in H.
-    rewrite H0, H6 in H8.
-    rewrite H, H8 in H5.
-    destruct H5 as [? [? [? ?]]].
+    rewrite H0, H6 in H5.
+    simpl in H4.
+    rewrite H, H5 in H4.
+    destruct H4 as [? [? [? ?]]].
+    unfold sepcon, mapsto.
+    remember (fst st12, (heap_update (snd st12) p (Some v))) as st22.
+    exists st11, st22.
     split.
     { unfold join.
-      rewrite Heqst22 at 1 2.
-      simpl fst.
+      split; try split.
+      + subst st22. unfold fst at 2. tauto.
+      + subst st22. unfold fst at 1.
+        rewrite H6; tauto.
+      + unfold join_heap in *.
+        intros; specialize (H7 p0).
+        destruct H7 as [? | [? | ?]].
+        - left.
+          subst st22; unfold heap_update.
+          unfold snd at 2.
+          destruct H7 as [v0 [? [? ?]]].
+          destruct (Z.eq_dec p p0).
+          { subst p0. destruct H2 as [v1 ?]. rewrite H2 in H11. inversion H11. }
+          exists v0.
+          split; try split; try tauto.
+          specialize (H9 p0 n).
+          rewrite H9. tauto. 
+        - right. left.
+          destruct H7 as [v0 [? [? ?]]].
+          subst st22; unfold heap_update.
+          unfold snd at 2.
+          destruct (Z.eq_dec p p0).
+          * exists v; subst p0.
+            split; try split; try tauto.
+          * exists v0.
+            specialize (H9 p0 n).
+            rewrite H9; tauto.
+        - right. right.
+          subst st22; unfold heap_update.
+          unfold snd at 2.
+          destruct (Z.eq_dec p p0).
+          { subst p0. tauto. }
+          specialize (H9 p0 n).
+          rewrite H9; tauto. }
       split; try tauto.
-      rewrite H6. split; try tauto.
-      unfold join_heap in *.
-      intros p0; specialize (H7 p0).
-      destruct H7 as [? | [? | ?]].
-      + left.
-        subst st22; unfold heap_update.
-        unfold snd at 2.
-        destruct (Z.eq_dec p p0).
-        { subst p0; destruct H7 as [v0 [? [? ?]]]; tauto. }
-        destruct H7 as [v0 ?].
-        exists v0.
-        split; try split; try tauto.
-        specialize (H10 p0 n).
-        rewrite H10. tauto.
-      + right; left.
-        destruct H7 as [v0 ?].
-        subst st22; unfold heap_update.
-        unfold snd at 2.
-        destruct (Z.eq_dec p p0).
-        - subst p0; exists v.
-          split; try split; try tauto.
-        - exists v0.
-          split; try split; try tauto.
-          specialize (H10 p0 n).
-          rewrite H10. tauto.
-      + right; right.
-        subst st22; unfold heap_update.
-        unfold snd at 2.
-        destruct (Z.eq_dec p p0).
-        { subst p0. tauto. }
-        specialize (H10 p0 n).
-        rewrite H10. tauto. }
-    split; try tauto.
-    subst st22.
-    unfold storesv, heap_update.
-    unfold snd at 1.
-    destruct (Z.eq_dec p p); try tauto. }
+      split.
+      { subst st22; unfold heap_update.
+        unfold snd at 1.
+        destruct (Z.eq_dec); try tauto. }
+      intros.
+      specialize (H3 p' H11).
+      subst st22; unfold heap_update.
+      unfold snd at 1.
+      destruct (Z.eq_dec p p'); try tauto. }
   split; simpl; tauto.
 Qed.
 
 End BasicRulesSound.
-        

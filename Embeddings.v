@@ -28,9 +28,9 @@ Definition safea (a : aexp) : Assertion := fun st => ~ (aeval a) (fst st) = None
 
 Definition safeb (b : bexp) : Assertion := fun st => ~ error_set (beval b) (fst st).
 
-Definition saferef (p : addr) : Assertion := fun st => ~ (snd st) p = None.
+Definition mapsto_ (p : addr) : Assertion := fun st => (exists v, (snd st) p = Some v) /\ (forall p', p <> p' -> (snd st) p' = None).
 
-Definition storesv (p : addr) (v : Z) : Assertion := fun st => (snd st) p = Some v.
+Definition mapsto (p : addr) (v : Z) : Assertion := fun st => (snd st) p = Some v /\ (forall p', p <> p' -> (snd st) p' = None).
 
 Definition derives : Assertion -> Assertion -> Prop := fun P Q => forall st, P st -> Q st.
 
