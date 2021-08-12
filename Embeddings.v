@@ -18,22 +18,36 @@ Definition falsep : Assertion := fun st => False.
 
 Definition truep : Assertion := fun st => True.
 
+Definition exp {A : Type} (P : A -> Assertion) : Assertion := fun st => exists a, P a st.
+
 Definition inj (b : bexp) : Assertion := fun st => true_set (beval b) (fst st).
+
+Definition eqp (a : aexp) (v : Z) : Assertion := fun st => (aeval a) (fst st) = Some v.
 
 Definition safea (a : aexp) : Assertion := fun st => ~ (aeval a) (fst st) = None.
 
 Definition safeb (b : bexp) : Assertion := fun st => ~ error_set (beval b) (fst st).
 
+Definition saferef (p : addr) : Assertion := fun st => ~ (snd st) p = None.
+
+Definition storesv (p : addr) (v : Z) : Assertion := fun st => (snd st) p = Some v.
+
 Definition derives : Assertion -> Assertion -> Prop := fun P Q => forall st, P st -> Q st.
 
 Definition store_update (s : store) (X : var) (v : option Z) : store :=
   match v with
-  | Some n => fun Y => if (Nat.eq_dec X Y) then n else s Y
+  | Some n => fun Y => if (Nat.eq_dec Y X) then n else s Y
   | None => fun Y => 0
   end.
 
 Definition heap_update (h : heap) (p : addr) (v : option Z) : heap :=
   fun q => if (Z.eq_dec p q) then v else h q.
+
+Definition subst_set (P : Assertion) (X : var) (v : Z) : Assertion :=
+  fun st => P (store_update (fst st) X (Some v), snd st).
+
+Definition subst_load (P : Assertion) (X : var) (v : Z) : Assertion :=
+  fun st => P (store_update (fst st) X (Some v), snd st).
 
 Definition join_heap : heap -> heap -> heap -> Prop :=
   fun h1 h2 h3 => 

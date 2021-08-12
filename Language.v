@@ -208,14 +208,14 @@ Definition load_sem (X : var) (DA : store -> option Z) : com_denote := {|
 
 Definition store_sem (DAL DAR : store -> option Z) : com_denote := {|
   com_normal := fun st1 st2 => match (DAL (fst st1)), (DAR (fst st1)) with
-    | Some n1, Some n2 => ((snd st1) n2 <> None) /\ ((snd st2) n2 = Some n1) /\ 
-                          (forall n, n <> n2 -> (snd st2) n = (snd st1) n) /\ (fst st1 = fst st2)
+    | Some p, Some v => ((snd st1) p <> None) /\ ((snd st2) p = Some v) /\ 
+                        (forall p', p <> p' -> (snd st2) p' = (snd st1) p') /\ (fst st1 = fst st2)
     | _, _ => False
   end;
   com_break := fun st1 st2 => False;
   com_cont := fun st1 st2 => False;
   com_error := fun st => match (DAL (fst st)), (DAR (fst st)) with
-    | Some n1, Some n2 => (snd st) n2 = None
+    | Some p, Some v => (snd st) p = None
     | _, _ => True 
   end; |}.
 
