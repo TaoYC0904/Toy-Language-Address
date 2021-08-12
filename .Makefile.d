@@ -7,3 +7,6 @@ Imp.vos Imp.vok Imp.required_vos: Imp.v lib/RTClosure.vos
 Language.vo Language.glob Language.v.beautified Language.required_vo: Language.v Imp.vo
 Language.vio: Language.v Imp.vio
 Language.vos Language.vok Language.required_vos: Language.v Imp.vos
+Embeddings.vo Embeddings.glob Embeddings.v.beautified Embeddings.required_vo: Embeddings.v Imp.vo Language.vo
+Embeddings.vio: Embeddings.v Imp.vio Language.vio
+Embeddings.vos Embeddings.vok Embeddings.required_vos: Embeddings.v Imp.vos Language.vos
