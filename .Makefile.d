@@ -10,3 +10,6 @@ Language.vos Language.vok Language.required_vos: Language.v Imp.vos
 Embeddings.vo Embeddings.glob Embeddings.v.beautified Embeddings.required_vo: Embeddings.v Imp.vo Language.vo
 Embeddings.vio: Embeddings.v Imp.vio Language.vio
 Embeddings.vos Embeddings.vok Embeddings.required_vos: Embeddings.v Imp.vos Language.vos
+BasicRules.vo BasicRules.glob BasicRules.v.beautified BasicRules.required_vo: BasicRules.v Imp.vo Language.vo Embeddings.vo
+BasicRules.vio: BasicRules.v Imp.vio Language.vio Embeddings.vio
+BasicRules.vos BasicRules.vok BasicRules.required_vos: BasicRules.v Imp.vos Language.vos Embeddings.vos
