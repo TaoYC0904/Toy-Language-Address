@@ -1,6 +1,8 @@
 -Q . Toy
 
 -Q ./lib Toy.lib
+-R ../qinxiang-unifysl Logic
+
 lib/RTClosure.v
 
 Imp.v

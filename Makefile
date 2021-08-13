@@ -861,6 +861,21 @@ debug:
 
 .DEFAULT_GOAL := all
 
+lgen_demo_2:
+	./logic_gen.sh LogicGenerator/demo/configuration_2.v LogicGenerator/demo/interface_2.v
+	@echo COQC LogicGenerator/demo/interface_2.v
+	@$(COQC) $(COQ_FLAG) LogicGenerator/demo/interface_2.v
+	@echo COQC LogicGenerator/demo/implementation_2a.v
+	@$(COQC) $(COQ_FLAG) LogicGenerator/demo/implementation_2a.v
+
+lgen:
+	cd ../qinxiang-unifysl ; \
+	./logic_gen.sh ../Toy-Language-Address/unifysl-interface/configuration.v ../Toy-Language-Address/unifysl-interface/interface.v
+
+
+
+# ./logic_gen.sh ../Toy-Language-Address/unifysl-interface/configuration.v ../Toy-Language-Address/unifysl-interface/implementation.v
+
 # Local Variables:
 # mode: makefile-gmake
 # End:
