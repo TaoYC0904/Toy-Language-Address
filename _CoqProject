@@ -1,11 +1,1 @@
--Q . Toy
-
--Q ./lib Toy.lib
--R ../qinxiang-unifysl Logic
-
-lib/RTClosure.v
-
-Imp.v
-Language.v
-Embeddings.v
-BasicRules.v
+-Q . Toy -Q ./lib Toy.lib -Q ./unifysl-interface Toy.UnifySL -R ../qinxiang-unifysl Logic

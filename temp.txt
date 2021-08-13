@@ -1,0 +1,9 @@
+lgen:
+	cd ../qinxiang-unifysl ; \
+	./logic_gen.sh ../Toy-Language-Address/unifysl-interface/configuration.v \
+	../Toy-Language-Address/unifysl-interface/interface.v 
+	cd ../Toy-Language-Address
+	@echo COQC unifysl-interface/interface.v
+	@$(COQC) $(COQ_FLAG) unifysl-interface/interface.v
+	@echo COQC unifysl-interface/implementation.v
+	@$(COQC) $(COQ_FLAG) unifysl-interface/implementation.v
