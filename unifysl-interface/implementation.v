@@ -1,5 +1,5 @@
 Require Import ZArith.
-Require Import interface_tyc2.
+Require Import interface.
 
 Require Import Logic.SeparationLogic.Sound.Sound_Flat.
 Require Import Logic.SeparationLogic.ShallowEmbedded.PredicateSeparationLogic.
