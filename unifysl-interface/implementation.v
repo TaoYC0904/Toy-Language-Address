@@ -56,6 +56,8 @@ Definition heap : Type := Heap addr Z.
 
 Definition state : Type := store * heap.
 
+Definition Assertion : Type := state -> Prop.
+
 (* Definition join_heap : heap -> heap -> heap -> Prop :=
   fun h1 h2 h3 => 
     forall p : Z,
@@ -94,14 +96,17 @@ Instance heapSA : SeparationAlgebra heap := Heap_SA addr Z.
 Instance stateSA : SeparationAlgebra state := prod_SA store heap.
 
 Module NaiveLang <: LanguageSig.
-  Definition expr := state -> Prop.
+  Definition expr := Assertion.
   Section NaiveLang.
     Definition context := expr -> Prop.
     Definition provable (e : expr) : Prop := forall st, e st.
     Definition impp (e1 e2 : expr) : expr := fun st => e1 st -> e2 st.
     Definition andp (e1 e2 : expr) : expr := fun st => e1 st /\ e2 st.
+    Definition orp (e1 e2 : expr) : expr := fun st => e1 st \/ e2 st.
     Definition sepcon := WeakSemantics.sepcon.
+    Definition negp (e : expr) : expr := fun st => ~ e st.
     Definition falsep : expr := fun st => False.
+    Definition truep : expr := fun st => True.
     Definition emp : expr := fun st => forall p, (snd st) p = None.
   End NaiveLang.
 End NaiveLang.

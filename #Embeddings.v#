@@ -67,7 +67,7 @@ Definition valid (P : Assertion) (c : com) (Q Rb Rc : Assertion) : Prop :=
 
 End Validity.
 
-Module tacticforOSA.
+Module temp.
 
 Ltac UFsepcon := unfold sepcon; 
                  unfold WeakSemantics.WeakSemantics.sepcon;
@@ -78,73 +78,30 @@ Ltac UFjoin := unfold stateJ; unfold stateJoin;
                unfold SeparationAlgebra.join;
                unfold store_join;
                unfold OSAGenerators.equiv_Join.
-
-Ltac UFheapjoin := unfold heap_join;
-                   unfold OSAExamples.Heap_Join;
-                   unfold OSAGenerators.fun_Join;
-                   unfold SeparationAlgebra.join;
-                   unfold OSAGenerators.option_Join.
-
+(* 
 Lemma osajoin : forall (st1 st2 st : state), 
-  (forall x, @OSAGenerators.option_join Z (@OSAGenerators.trivial_Join Z)
-          (snd st1 x) (snd st2 x) (snd st x)) <-> 
+  (forall x, OSAGenerators.option_join Z 
+          (snd st1 x) (snd st2 x) (snd st x)) -> 
   (forall p, (exists v, snd st1 p = Some v /\ snd st2 p = None /\ snd st p = Some v) \/
              (exists v, snd st1 p = None /\ snd st2 p = Some v /\ snd st p = Some v) \/
              (snd st1 p = None ) /\ (snd st2 p = None) /\ (snd st p = None)). 
+ *)
+Import Assertion_Shallow.
+Goal forall P Q st, (sepcon P Q) st.
 Proof.
-  intros.
-  unfold iff; split.
-  + intros.
-    specialize (H p).
-    destruct (snd st1 p), (snd st2 p), (snd st p).
-    - inversion H. tauto.
-    - inversion H.
-    - inversion H. rewrite <- H0.
-      left. exists z. tauto.
-    - inversion H.
-    - inversion H.
-      right. left. exists z0. tauto.
-    - inversion H.
-    - inversion H.
-    - right. right. tauto.
-  + intros.
-    specialize (H x).
-    destruct (snd st1 x), (snd st2 x), (snd st x).
-    - destruct H as [? | [? | ?]].
-      * destruct H as [v [? [? ?]]]. inversion H0.
-      * destruct H as [v [? [? ?]]]. inversion H.
-      * destruct H as [? [? ?]]. inversion H.
-    - destruct H as [? | [? | ?]].
-      * destruct H as [v [? [? ?]]]. inversion H0.
-      * destruct H as [v [? [? ?]]]. inversion H.
-      * destruct H as [? [? ?]]. inversion H.
-    - destruct H as [? | [? | ?]].
-      * destruct H as [v [? [? ?]]].
-        inversion H. inversion H1. subst. constructor.
-      * destruct H as [v [? [? ?]]]. inversion H0.
-      * destruct H as [? [? ?]]. inversion H.
-    - destruct H as [? | [? | ?]].
-      * destruct H as [v [? [? ?]]]. inversion H1.
-      * destruct H as [v [? [? ?]]]. inversion H.
-      * destruct H as [? [? ?]]. inversion H.
-    - destruct H as [? | [? | ?]].
-      * destruct H as [v [? [? ?]]]. inversion H.
-      * destruct H as [v [? [? ?]]]. 
-        inversion H0. inversion H1. subst. constructor.
-      * destruct H as [? [? ?]]. inversion H0.
-    - destruct H as [? | [? | ?]].
-      * destruct H as [v [? [? ?]]]. inversion H.
-      * destruct H as [v [? [? ?]]]. inversion H1.
-      * destruct H as [? [? ?]]. inversion H0.
-    - destruct H as [? | [? | ?]].
-      * destruct H as [v [? [? ?]]]. inversion H.
-      * destruct H as [v [? [? ?]]]. inversion H0.
-      * destruct H as [? [? ?]]. inversion H1.
-    - destruct H as [? | [? | ?]].
-      * destruct H as [v [? [? ?]]]. inversion H.
-      * destruct H as [v [? [? ?]]]. inversion H0.
-      * constructor.
-Qed.
+  UFsepcon.
+  UFjoin.
+  unfold heap_join.
+  unfold OSAExamples.Heap_Join.
+  unfold OSAGenerators.fun_Join.
+  unfold SeparationAlgebra.join.
+  unfold OSAGenerators.option_Join.
+  intros. exists st, st. split.
+  + split. admit.
+    intros.
+     
+  (* unfold OSAGenerators.option_join. *)
+Admitted.
 
-End tacticforOSA.
+End temp.
 

@@ -1,9 +1,11 @@
 Require Import Toy.Imp.
 Require Import Toy.Language.
 Require Import Toy.Embeddings.
+Require Import Toy.UnifySL.implementation.
 
 Module BasicRulesSound.
 Import Validity Assertion_Shallow Denote_State Denote_Aexp Denote_Bexp Denote_Com.
+Import tacticforOSA T.
 
 Theorem hoare_skip_sound : forall P, valid P CSkip P falsep falsep.
 Proof.
@@ -228,7 +230,7 @@ Proof.
   { intros.
     unfold andp, eqp, exp, subst_set.
     simpl in H2. destruct H2. split.
-    + simpl. rewrite H2. tauto.
+    + simpl. rewrite <-H. tauto.
     + exists ((fst st1) X).
       remember (store_update (fst st2) X (Some (fst st1 X))) as s'.
       assert (forall X, s' X = (fst st1) X).
@@ -242,10 +244,11 @@ Proof.
       { eapply FunctionalExtensionality.functional_extensionality_dep.
         subst. tauto. }
       subst.
-      destruct H3. rewrite <- H6.
-      rewrite H5.
-      destruct st1 in *.
-      unfold fst, snd. tauto. }
+      destruct H3.
+      assert (st1 = (store_update (fst st2) X (Some (fst st1 X)), snd st2)).
+      { destruct st1. unfold snd at 1 in H6. rewrite <- H6.
+        unfold fst at 3 in H5. rewrite H5. tauto. }
+      rewrite H7 in H0. tauto. }
   split; simpl; tauto.
 Qed.
 
@@ -260,7 +263,7 @@ Proof.
   split.
   { unfold not; intros.
     simpl in H3.
-    rewrite H, H1 in H3. inversion H3. }
+    rewrite H， H1 in H3. inversion H3. }
   split.
   { intros.
     unfold andp, eqp, exp; simpl.

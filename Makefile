@@ -22,19 +22,25 @@ FILES = \
 CoqProject:
 	@echo $(COQ_FLAG) > _CoqProject
 
-language:
+basic:
+	@echo COQC Imp.v
+	@$(COQC) $(COQ_FLAG) Imp.v
+	@echo COQC ./lib/RTClosure.v
+	@$(COQC) $(COQ_FLAG) RTClosure.v
+
+lang:
 	@echo COQC Language.v
 	@$(COQC) $(COQ_FLAG) Language.v
 	@echo COQC Embeddings.v
 	@$(COQC) $(COQ_FLAG) Embeddings.v
-	@echo COQC BasicRules.v
-	@$(COQC) $(COQ_FLAG) BasicRules.v
 
 lgen:
 	cd ../qinxiang-unifysl ; \
 	./logic_gen.sh ../Toy-Language-Address/unifysl-interface/configuration.v \
 	../Toy-Language-Address/unifysl-interface/interface.v 
 	cd ../Toy-Language-Address
+
+logic:
 	@echo COQC unifysl-interface/interface.v
 	@$(COQC) $(COQ_FLAG) unifysl-interface/interface.v
 	@echo COQC unifysl-interface/implementation.v

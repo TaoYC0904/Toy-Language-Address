@@ -11,8 +11,11 @@ Module Type LanguageSig.
   Parameter provable : (expr -> Prop) .
   Parameter impp : (expr -> expr -> expr) .
   Parameter andp : (expr -> expr -> expr) .
+  Parameter orp : (expr -> expr -> expr) .
   Parameter Inline sepcon : (expr -> expr -> expr) .
+  Parameter negp : (expr -> expr) .
   Parameter falsep : expr .
+  Parameter truep : expr .
   Parameter emp : expr .
 End LanguageSig.
 
@@ -135,8 +138,11 @@ Include Rules.
   Instance L : Language := (Build_Language expr) .
   Instance minL : (MinimumLanguage L) := (Build_MinimumLanguage L impp) .
   Instance andpL : (AndLanguage L) := (Build_AndLanguage L andp) .
+  Instance orpL : (OrLanguage L) := (Build_OrLanguage L orp) .
   Instance sepconL : (SepconLanguage L) := (Build_SepconLanguage L sepcon) .
+  Instance negpL : (NegLanguage L) := (Build_NegLanguage L negp) .
   Instance falsepL : (FalseLanguage L) := (Build_FalseLanguage L falsep) .
+  Instance truepL : (TrueLanguage L) := (Build_TrueLanguage L truep) .
   Instance empL : (EmpLanguage L) := (Build_EmpLanguage L emp) .
   Instance GammaP : (Provable L) := (Build_Provable L provable) .
   Instance GammaD : (Derivable L) := (Build_Derivable L derivable) .

@@ -7,8 +7,11 @@ Import ListNotations.
 Definition how_connectives :=
   [primitive_connective impp
   ;primitive_connective andp
+  ;primitive_connective orp
   ;primitive_connective sepcon
+  ;primitive_connective negp
   ;primitive_connective falsep
+  ;primitive_connective truep
   ;primitive_connective emp
   ;FROM_impp_TO_multi_imp
   ;FROM_empty_set_TO_empty_context
