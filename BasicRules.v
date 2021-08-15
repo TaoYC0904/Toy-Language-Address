@@ -4,7 +4,7 @@ Require Import Toy.Embeddings.
 Require Import Toy.UnifySL.implementation.
 
 Module BasicRulesSound.
-Import Validity Assertion_Shallow Denote_State Denote_Aexp Denote_Bexp Denote_Com.
+Import Validity Assertion_Shallow Denote_Aexp Denote_Bexp Denote_Com.
 Import tacticforOSA T.
 
 Theorem hoare_skip_sound : forall P, valid P CSkip P falsep falsep.
@@ -263,7 +263,7 @@ Proof.
   split.
   { unfold not; intros.
     simpl in H3.
-    rewrite H， H1 in H3. inversion H3. }
+    rewrite H, H1 in H3.  inversion H3. }
   split.
   { intros.
     unfold andp, eqp, exp; simpl.
@@ -295,6 +295,96 @@ Theorem hoare_store_sound : forall P e1 e2 p v,
   derives P (andp (eqp e1 p) (eqp e2 v)) ->
   valid (sepcon P (mapsto_ p)) (CAss_store e1 e2) (sepcon P (mapsto p v)) falsep falsep.
 Proof.
+  unfold valid; intros.
+  unfold derives, andp, eqp in H.
+  UFsepcon.
+  split.
+  { unfold not; intros.
+    destruct H0 as [st11 [st12 [? [? ?]]]].
+    UFjoin. destruct H0 as [[? ?] ?].
+    specialize (H st11 H2); destruct H.
+    rewrite H0 in H, H6.
+    simpl in H1. rewrite H, H6 in H1.
+    unfold mapsto_ in H3.
+    destruct H3 as [[v0 ?] ?].
+    UFheapjoin. rewrite osajoin in H5.
+    specialize (H5 p); destruct H5 as [? | [? | ?]].
+    + destruct H5 as [? [? [? ?]]]. rewrite H9 in H1. inversion H1.
+    + destruct H5 as [? [? [? ?]]]. rewrite H9 in H1. inversion H1.
+    + destruct H5 as [? [? ?]]. rewrite H8 in H3. inversion H3. }
+  split. 
+  { intros.
+    destruct H0 as [st11 [st12 [? [? ?]]]].
+    UFjoin. destruct H0 as [[? ?] ?].
+    specialize (H st11 H2); destruct H.
+    rewrite H0 in H, H6.
+    simpl in H1. rewrite H, H6 in H1.
+    destruct H1 as [? [? [? ?]]].
+    exists st11, (fst st12, heap_update (snd st12) p (Some v)).
+    split; split.
+    + split; [rewrite H0; tauto |].
+      unfold fst at 1. rewrite H4; tauto.
+    + UFheapjoin. rewrite osajoin in *.
+      remember (fst st12, heap_update (snd st12) p (Some v)) as st22.
+      intros p0. specialize (H5 p0).
+      destruct H5 as [? | [? | ?]].
+      - destruct H5 as [v0 [? [? ?]]].
+        left. exists v0. subst st22. 
+        unfold heap_update. unfold snd at 2.
+        split; try tauto. split.
+        * destruct (Z.eq_dec p p0). 
+          { unfold mapsto_ in H3.
+            subst p0. destruct H3. destruct H3 as [v00 ?].
+            rewrite H3 in H10. inversion H10. }
+          tauto.  
+        * destruct (Z.eq_dec p p0).
+          { unfold mapsto_ in H3. 
+            destruct H3. destruct H3 as [v00 ?].
+            subst p. rewrite H3 in H10. inversion H10. }
+          specialize (H8 p0 n). rewrite H8. tauto.
+      - right. left.
+        destruct H5 as [v0 [? [? ?]]].
+        destruct (Z.eq_dec p p0).
+        * exists v. subst p0.
+          split; try tauto.
+          split; try tauto.
+          subst st22. unfold snd at 1. unfold heap_update.
+          destruct (Z.eq_dec p p); try tauto.
+        * exists v0. split; try split; try tauto.
+          { subst st22. unfold snd at 1. unfold heap_update.
+            destruct (Z.eq_dec p p0); try tauto. }
+          specialize (H8 p0 n). rewrite H8. tauto.
+      - right. right.
+        split; try split; try tauto.
+        * subst st22. unfold snd at 1. unfold heap_update.
+          destruct (Z.eq_dec p p0).
+          { subst p0. destruct H5 as [? [? ?]].
+            rewrite H11 in H1; tauto. }
+          unfold mapsto_ in H3.
+          destruct H3. destruct H3.
+          destruct H5 as [? [? ?]]. tauto.
+        * destruct (Z.eq_dec p p0).
+          { subst p0. unfold mapsto_ in H3.
+            destruct H3 as [[v0 ?] ?].
+            destruct H5 as [? [? ?]].
+            rewrite H3 in H11. inversion H11. }
+          specialize (H8 p0 n).
+          rewrite H8. tauto.
+    + tauto.
+    + unfold mapsto. split.
+      - unfold snd at 1.
+        unfold heap_update.
+        destruct (Z.eq_dec p p); try tauto.
+      - intros p0 ?.
+        unfold snd at 1. unfold heap_update.
+        destruct (Z.eq_dec p p0); try tauto.
+        unfold mapsto_ in H3.
+        destruct H3.
+        specialize (H11 p0 n). tauto. } 
+  split; simpl; tauto.
+Qed.
+            
+(* Proof.
   unfold valid; intros.
   unfold derives, andp, eqp in H.
   unfold andp, sepcon, mapsto_ in H0.
@@ -378,6 +468,6 @@ Proof.
       unfold snd at 1.
       destruct (Z.eq_dec p p'); try tauto. }
   split; simpl; tauto.
-Qed.
+Qed. *)
 
 End BasicRulesSound.

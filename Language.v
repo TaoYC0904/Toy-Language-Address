@@ -1,22 +1,8 @@
 Require Import Coq.Lists.List.
 Require Import Toy.Imp.
+Require Import Toy.UnifySL.implementation.
+Import T.
 Open Scope Z.
-
-Module Denote_State.
-
-Definition var : Type := nat.
-
-Definition store : Type := var -> Z.
-
-Definition addr : Type := Z.
-
-Definition heap : Type := addr -> option Z.
-
-Definition state : Type := store * heap.
-
-End Denote_State.
-
-Import Denote_State.
 
 Inductive aexp : Type :=
   | ANum (n : Z)
@@ -60,7 +46,6 @@ Definition div {A : Type} (f g : A -> option Z) : A -> option Z :=
 End OptF.
 
 Module Denote_Aexp.
-Import Denote_State.
 
 Fixpoint aeval (a : aexp) : store -> option Z :=
   match a with

@@ -6,7 +6,6 @@ Module Assertion_Shallow.
 Import Denote_Aexp.
 Import Denote_Bexp.
 Import Denote_Com.
-Import Denote_State.
 
 Definition exp {A : Type} (P : A -> Assertion) : Assertion := fun st => exists a, P a st.
 
@@ -54,7 +53,6 @@ Definition sepcon (P Q : Assertion) : Assertion :=
 End Assertion_Shallow.
 
 Module Validity.
-Import Denote_State.
 Import Assertion_Shallow.
 Import Denote_Com.
 
@@ -69,21 +67,21 @@ End Validity.
 
 Module tacticforOSA.
 
-Ltac UFsepcon := unfold sepcon; 
-                 unfold WeakSemantics.WeakSemantics.sepcon;
-                 unfold SeparationAlgebra.join.
+Ltac UFsepcon := unfold sepcon in *; 
+                 unfold WeakSemantics.WeakSemantics.sepcon in *;
+                 unfold SeparationAlgebra.join in *.
 
-Ltac UFjoin := unfold stateJ; unfold stateJoin;
-               unfold OSAGenerators.prod_Join;
-               unfold SeparationAlgebra.join;
-               unfold store_join;
-               unfold OSAGenerators.equiv_Join.
+Ltac UFjoin := unfold stateJ in *; unfold stateJoin in *;
+               unfold OSAGenerators.prod_Join in *;
+               unfold SeparationAlgebra.join in *;
+               unfold store_join in *;
+               unfold OSAGenerators.equiv_Join in *.
 
-Ltac UFheapjoin := unfold heap_join;
-                   unfold OSAExamples.Heap_Join;
-                   unfold OSAGenerators.fun_Join;
-                   unfold SeparationAlgebra.join;
-                   unfold OSAGenerators.option_Join.
+Ltac UFheapjoin := unfold heap_join in *;
+                   unfold OSAExamples.Heap_Join in *;
+                   unfold OSAGenerators.fun_Join in *;
+                   unfold SeparationAlgebra.join in *;
+                   unfold OSAGenerators.option_Join in *.
 
 Lemma osajoin : forall (st1 st2 st : state), 
   (forall x, @OSAGenerators.option_join Z (@OSAGenerators.trivial_Join Z)
@@ -147,4 +145,3 @@ Proof.
 Qed.
 
 End tacticforOSA.
-
