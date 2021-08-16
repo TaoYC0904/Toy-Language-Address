@@ -129,14 +129,14 @@ Fixpoint beval (b : bexp) : bexp_denote :=
         {| true_set := false_set (beval b);
            false_set := true_set (beval b);
            error_set := error_set (beval b); |}
-           | BAnd b1 b2 =>
-           {| true_set := Sets.intersect (true_set (beval b1)) (true_set (beval b2));
-              false_set := Sets.union (false_set (beval b1))
-                                      (Sets.intersect (true_set (beval b1))
-                                                      (false_set (beval b2)));
-              error_set := Sets.union (error_set (beval b1))
-                                      (Sets.intersect (true_set (beval b1))
-                                                      (error_set (beval b2))); |}
+    | BAnd b1 b2 =>
+        {| true_set := Sets.intersect (true_set (beval b1)) (true_set (beval b2));
+           false_set := Sets.union (false_set (beval b1))
+                                   (Sets.intersect (true_set (beval b1))
+                                                   (false_set (beval b2)));
+           error_set := Sets.union (error_set (beval b1))
+                                   (Sets.intersect (true_set (beval b1))
+                                                   (error_set (beval b2))); |}
        end.
 
 End Denote_Bexp.

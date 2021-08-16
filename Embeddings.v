@@ -130,3 +130,148 @@ Proof.
 Qed.
 
 End tacticforOSA.
+
+Module AssertionDerivationRules.
+Import Denote_Aexp Denote_Bexp.
+Import Assertion_Shallow.
+Import tacticforOSA.
+
+Lemma Assertion_eqp_safea : forall P e v,
+  derives P (eqp e v) -> 
+  derives P (safea e).
+Proof.
+  unfold derives; intros.
+  specialize (H st H0).
+  unfold eqp, safea in *.
+  unfold not; intros.
+  rewrite H1 in H; inversion H.
+Qed.
+
+Example true_false_contradiction : forall b s,
+  true_set (beval b) s ->
+  false_set (beval b) s ->
+  False.
+Proof.
+  induction b; intros.
+  + inversion H0.
+  + inversion H.
+  + simpl in *.
+    destruct (aeval a1 s), (aeval a2 s); tauto.
+  + simpl in *.
+    destruct (aeval a1 s), (aeval a2 s); tauto.
+  + simpl in *.
+    specialize (IHb s); tauto.
+  + simpl in *.
+    unfold Sets.intersect, Sets.union in *.
+    specialize (IHb1 s); specialize (IHb2 s); tauto.
+Qed.
+
+Lemma Assertion_inj_safeb : forall P b,
+  (derives P (inj b) \/ derives P (inj (BNot b)))->
+  derives P (safeb b).
+Proof.
+  unfold derives; intros.
+  unfold safeb, inj in *.
+  unfold not; intros.
+  simpl in *.
+  assert (forall st, P st -> (true_set (beval b) st) \/ (false_set (beval b) st)).
+  { intros; destruct H; specialize (H st0 H2); tauto. }
+  clear H. specialize (H2 st H0).
+  induction b.
+  + inversion H1.
+  + inversion H1.
+  + destruct H2; simpl in *;
+    destruct (aeval a1 st), (aeval a2 st); tauto.
+  + destruct H2; simpl in *;
+    destruct (aeval a1 st), (aeval a2 st); tauto.
+  + simpl in *. tauto.
+  + simpl in *. unfold Sets.union, Sets.intersect in *.
+    destruct H1 as [? | ?]; destruct H2 as [? | [? | ?]]; try tauto.
+    apply (true_false_contradiction b1 st); tauto.
+Qed.
+
+Lemma Assertion_add : forall P e1 e2 v1 v2,
+  derives P (eqp e1 v1) ->
+  derives P (eqp e2 v2) ->
+  derives P (eqp (APlus e1 e2) (v1 + v2)).
+Proof.
+  unfold derives; intros.
+  specialize (H st H1).
+  specialize (H0 st H1).
+  unfold eqp in *.
+  simpl. unfold add_sem.
+  rewrite H, H0. tauto.
+Qed.
+
+Lemma Assertion_sub : forall P e1 e2 v1 v2,
+  derives P (eqp e1 v1) ->
+  derives P (eqp e2 v2) ->
+  derives P (eqp (AMinus e1 e2) (v1 - v2)).
+Proof.
+  unfold derives; intros.
+  specialize (H st H1).
+  specialize (H0 st H1).
+  unfold eqp in *.
+  simpl. unfold sub_sem.
+  rewrite H, H0. tauto.
+Qed.
+
+Lemma Assertion_mul : forall P e1 e2 v1 v2,
+  derives P (eqp e1 v1) ->
+  derives P (eqp e2 v2) ->
+  derives P (eqp (AMult e1 e2) (v1 * v2)).
+Proof.
+  unfold derives; intros.
+  specialize (H st H1).
+  specialize (H0 st H1).
+  unfold eqp in *.
+  simpl. unfold mul_sem.
+  rewrite H, H0. tauto.
+Qed.
+
+Lemma Assertion_div : forall P e1 e2 v1 v2,
+  derives P (eqp e1 v1) ->
+  derives P (eqp e2 v2) ->
+  v2 <> 0 ->
+  derives P (eqp (ADiv e1 e2) (v1 / v2)).
+Proof.
+  unfold derives; intros.
+  specialize (H st H2).
+  specialize (H0 st H2).
+  unfold eqp in *.
+  simpl. unfold div_sem.
+  rewrite H, H0.
+  destruct (Z.eq_dec v2 0); tauto.
+Qed.
+
+Lemma Assertion_sepcon : forall P X p v,
+  derives P (eqp (AId X) p) ->
+  derives P (sepcon (mapsto p v) truep) ->
+  derives P (eqp (ADeref (AId X)) v).
+Proof.
+  unfold derives; intros.
+  specialize (H st H1).
+  specialize (H0 st H1).
+  unfold eqp in *.
+  UFsepcon.
+  destruct H0 as [st1 [st2 [? [? ?]]]].
+  unfold mapsto, truep in *.
+  destruct H2; clear H3.
+  simpl in *. inversion H.
+  unfold deref_sem. rewrite H5.
+  assert (snd st p = Some v).
+  { UFjoin.
+    destruct H0 as [_ ?].
+    UFheapjoin.
+    rewrite osajoin in H0.
+    specialize (H0 p). destruct H0 as [? | [? | ?]].
+    + destruct H0 as [v0 [? [? ?]]].
+      rewrite H0 in H2. rewrite H2 in H6. tauto.
+    + destruct H0 as [v0 [? [? ?]]].
+      rewrite H0 in H2; inversion H2.
+    + destruct H0 as [? [? ?]].
+      rewrite H0 in H2; inversion H2. }
+  rewrite H3. tauto.
+Qed.
+
+End AssertionDerivationRules.
