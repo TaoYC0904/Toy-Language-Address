@@ -48,5 +48,7 @@ lang_noderef:
 	@$(COQC) $(COQ_FLAG) Embeddings_noderef.v
 
 lang:
-	@echo COQC Language_deref.v
-	@$(COQC) $(COQ_FLAG) Language_deref.v
+	@echo COQC Language.v
+	@$(COQC) $(COQ_FLAG) Language.v
+	@echo COQC Embeddings.v
+	@$(COQC) $(COQ_FLAG) Embeddings.v
