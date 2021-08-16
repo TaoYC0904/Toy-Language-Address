@@ -215,6 +215,39 @@ Proof.
   tauto.
 Qed.
 
-Theorem hoare_load_sound : 
+Theorem hoare_load_sound : forall P e v X,
   derives P (eqp e v) ->
   valid P (CAss_load X e) (andp (eqp (AId X) v) (exp (subst P X))) falsep falsep.
+Proof.
+  unfold derives, valid; intros.
+  specialize (H st1 H0).
+  split.
+  { unfold not; intros.
+    simpl in *.
+    unfold eqp in H. rewrite H in H1; inversion H1. }
+  split.
+  { intros.
+    simpl in *.
+    unfold eqp in H.
+    rewrite H in H1. destruct H1 as [? [? ?]].
+    split.
+    + unfold eqp in *. simpl in *.
+      rewrite H1; tauto.
+    + unfold exp, subst in *.
+      exists (fst st1 X).
+      remember (store_update (fst st2) X (Some (fst st1 X))) as s'.
+      assert (forall Y, s' Y = fst st1 Y).
+      { intros.
+        subst s'. unfold store_update.
+        destruct (Nat.eq_dec Y X).
+        + subst X; tauto.
+        + specialize (H2 Y n); tauto. }
+      assert (s' = fst st1).
+      { eapply FunctionalExtensionality.functional_extensionality_dep.
+        apply H4. }
+      rewrite H5, <-H3.
+      destruct st1; unfold fst, snd; tauto. }
+  split; simpl; tauto.
+Qed.
+
+
