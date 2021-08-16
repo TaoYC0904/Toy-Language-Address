@@ -10,59 +10,51 @@ Inductive aexp : Type :=
   | APlus (a1 a2 : aexp)
   | AMinus (a1 a2 : aexp)
   | AMult (a1 a2 : aexp)
-  | ADiv (a1 a2 : aexp)
-  | ADeref (a : aexp).
+  | ADiv (a1 a2 : aexp).
 
-Module Denote_Aexp.
+Module OptF.
 
-Definition add_sem (da1 da2 : state -> option Z) : state -> option Z :=
+Definition add {A : Type} (f g : A -> option Z) : A -> option Z :=
   fun st =>
-    match da1 st, da2 st with
+    match f st, g st with
       | Some v1, Some v2 => Some (v1 + v2)
       | _, _ => None
-    end. 
+    end.
 
-Definition sub_sem (da1 da2 : state -> option Z) : state -> option Z :=
+Definition sub {A : Type} (f g : A -> option Z) : A -> option Z :=
   fun st =>
-    match da1 st, da2 st with
+    match f st, g st with
       | Some v1, Some v2 => Some (v1 - v2)
       | _, _ => None
     end.
-
-Definition mul_sem (da1 da2 : state -> option Z) : state -> option Z :=
+    
+Definition mul {A : Type} (f g : A -> option Z) : A -> option Z :=
   fun st =>
-    match da1 st, da2 st with
+    match f st, g st with
       | Some v1, Some v2 => Some (v1 * v2)
       | _, _ => None
     end.
-  
-Definition div_sem (da1 da2 : state -> option Z) : state -> option Z :=
+
+Definition div {A : Type} (f g : A -> option Z) : A -> option Z :=
   fun st =>
-    match da1 st, da2 st with
+    match f st, g st with
       | Some v1, Some v2 =>
           if Z.eq_dec v2 0 then None else Some (v1 / v2)
       | _, _ => None
     end.
 
-Definition deref_sem (da : state -> option Z) : state -> option Z :=
-  fun st =>
-    match da st with
-      | Some v => match snd st v with
-        | Some v' => Some v'
-        | _ => None
-      end
-      | _ => None
-    end.
+End OptF.
 
-Fixpoint aeval (a : aexp) : state -> option Z :=
+Module Denote_Aexp.
+
+Fixpoint aeval (a : aexp) : store -> option Z :=
   match a with
-    | ANum n => fun _ =>  Some n
-    | AId X => fun st => Some (fst st X)
-    | APlus a1 a2 => add_sem (aeval a1) (aeval a2)
-    | AMinus a1 a2 => sub_sem (aeval a1) (aeval a2)
-    | AMult a1 a2 => mul_sem (aeval a1) (aeval a2)
-    | ADiv a1 a2 => div_sem (aeval a1) (aeval a2)
-    | ADeref a => deref_sem (aeval a)
+    | ANum n => fun _ => Some n
+    | AId X => fun st => Some (st X)
+    | APlus a1 a2 => OptF.add (aeval a1) (aeval a2)
+    | AMinus a1 a2 => OptF.sub (aeval a1) (aeval a2)
+    | AMult a1 a2 => OptF.mul (aeval a1) (aeval a2)
+    | ADiv a1 a2 => OptF.div (aeval a1) (aeval a2)
   end.
 
 End Denote_Aexp.
@@ -76,11 +68,11 @@ Inductive bexp : Type :=
   | BAnd (b1 b2 : bexp).
 
 Record bexp_denote : Type := {
-  true_set : state -> Prop;
-  false_set : state -> Prop;
-  error_set : state -> Prop; }.
+  true_set : store -> Prop;
+  false_set : store -> Prop;
+  error_set : store -> Prop; }.
 
-Definition opt_test (R : Z -> Z -> Prop) (X Y : state -> option Z) : bexp_denote :=
+Definition opt_test (R : Z -> Z -> Prop) (X Y : store -> option Z) : bexp_denote :=
 {|
   true_set := fun st =>
     match X st, Y st with
@@ -113,31 +105,31 @@ Import Denote_Aexp.
 
 Fixpoint beval (b : bexp) : bexp_denote :=
   match b with
-    | BTrue =>
-        {| true_set := Sets.full;
-           false_set := Sets.empty;
-           error_set := Sets.empty; |}
-    | BFalse =>
-        {| true_set := Sets.empty;
-           false_set := Sets.full;
-           error_set := Sets.empty; |}
-    | BEq a1 a2 =>
-        opt_test Z.eq (aeval a1) (aeval a2)
-    | BLe a1 a2 => 
-        opt_test Z.le (aeval a1) (aeval a2)
-    | BNot b =>
-        {| true_set := false_set (beval b);
-           false_set := true_set (beval b);
-           error_set := error_set (beval b); |}
-           | BAnd b1 b2 =>
-           {| true_set := Sets.intersect (true_set (beval b1)) (true_set (beval b2));
-              false_set := Sets.union (false_set (beval b1))
-                                      (Sets.intersect (true_set (beval b1))
-                                                      (false_set (beval b2)));
-              error_set := Sets.union (error_set (beval b1))
-                                      (Sets.intersect (true_set (beval b1))
-                                                      (error_set (beval b2))); |}
-       end.
+  | BTrue =>
+      {| true_set := Sets.full;
+         false_set := Sets.empty;
+         error_set := Sets.empty; |}
+  | BFalse =>
+      {| true_set := Sets.empty;
+         false_set := Sets.full;
+         error_set := Sets.empty; |}
+  | BEq a1 a2 =>
+      opt_test Z.eq (aeval a1) (aeval a2)
+  | BLe a1 a2 =>
+      opt_test Z.le (aeval a1) (aeval a2)
+  | BNot b =>
+      {| true_set := false_set (beval b);
+         false_set := true_set (beval b);
+         error_set := error_set (beval b); |}
+  | BAnd b1 b2 =>
+      {| true_set := Sets.intersect (true_set (beval b1)) (true_set (beval b2));
+         false_set := Sets.union (false_set (beval b1))
+                                 (Sets.intersect (true_set (beval b1))
+                                                 (false_set (beval b2)));
+         error_set := Sets.union (error_set (beval b1))
+                                 (Sets.intersect (true_set (beval b1))
+                                                 (error_set (beval b2))); |}
+  end.
 
 End Denote_Bexp.
 
@@ -145,7 +137,8 @@ Inductive com : Type :=
   | CSkip
   | CBreak
   | CCont
-  | CAss_load (X : var) (a : aexp)
+  | CAss_set (X : var) (a : aexp)
+  | CAss_load (X : var) (a2 : aexp)
   | CAss_store (a1 : aexp) (a2 : aexp)
   | CSeq (c1 c2 : com)
   | CIf (b : bexp) (c1 c2 : com)
@@ -179,29 +172,39 @@ Definition cont_sem : com_denote := {|
   com_cont := fun st1 st2 => st1 = st2;
   com_error := fun st => False; |}.
 
-Definition load_sem (X : var) (DA : state -> option Z) : com_denote := {|
-  com_normal := fun st1 st2 => match DA st1 with
-    | Some n => (fst st2 X = n) /\ (forall Y, Y <> X -> fst st2 Y = fst st1 Y) /\ (snd st1 = snd st2)
-    | None => False
+Definition set_sem (X : var) (DA : store -> option Z) : com_denote := {|
+  com_normal := fun st1 st2 => 
+    (Some ((fst st2) X) = DA (fst st1)) /\ (forall Y, Y <> X -> (fst st2) Y = (fst st1) Y) /\ (snd st1 = snd st2);  
+  com_break := fun st1 st2 => False;
+  com_cont := fun st1 st2 => False;
+  com_error := fun st => DA (fst st) = None; |}.
+
+Definition load_sem (X : var) (DA : store -> option Z) : com_denote := {|
+  com_normal := fun st1 st2 => match (DA (fst st1)) with
+    | Some n => (Some ((fst st2) X) = (snd st1) n) /\ (forall Y, Y <> X -> (fst st2) Y = (fst st1) Y) /\ (snd st1 = snd st2)
+    | _ => False
   end;
   com_break := fun st1 st2 => False;
   com_cont := fun st1 st2 => False;
-  com_error := fun st => (DA st) = None; |}.
-  
-Definition store_sem (DAL DAR : state -> option Z) : com_denote := {|
-  com_normal := fun st1 st2 => match DAL st1, DAR st1 with
-    | Some p, Some v => (snd st1 p <> None) /\ (snd st2 p = Some v) /\
-        (forall p', p <> p' -> snd st2 p' = snd st1 p') /\ (fst st1 = fst st2)
-    | _, _ => False 
+  com_error := fun st => match (DA (fst st)) with
+    | Some n => (snd st) n = None
+    | None => True
+  end; |}.
+
+Definition store_sem (DAL DAR : store -> option Z) : com_denote := {|
+  com_normal := fun st1 st2 => match (DAL (fst st1)), (DAR (fst st1)) with
+    | Some p, Some v => ((snd st1) p <> None) /\ ((snd st2) p = Some v) /\ 
+                        (forall p', p <> p' -> (snd st2) p' = (snd st1) p') /\ (fst st1 = fst st2)
+    | _, _ => False
   end;
   com_break := fun st1 st2 => False;
   com_cont := fun st1 st2 => False;
-  com_error := fun st => match DAL st, DAR st with
-    | Some p, Some v => snd st p = None
+  com_error := fun st => match (DAL (fst st)), (DAR (fst st)) with
+    | Some p, Some v => (snd st) p = None
     | _, _ => True 
   end; |}.
 
-  Definition seq_sem (DC1 DC2 : com_denote) : com_denote := {|
+Definition seq_sem (DC1 DC2 : com_denote) : com_denote := {|
   com_normal := fun st1 st2 =>
     exists st3, com_normal DC1 st1 st3 /\ com_normal DC2 st3 st2;
   com_break := fun st1 st2 =>
@@ -215,18 +218,18 @@ Definition store_sem (DAL DAR : state -> option Z) : com_denote := {|
   
 Definition if_sem (DB : bexp_denote) (DC1 DC2 : com_denote) : com_denote := {|
   com_normal := fun st1 st2 => 
-    (true_set DB st1 /\ com_normal DC1 st1 st2) \/
-    (false_set DB st1 /\ com_normal DC2 st1 st2);
+    (true_set DB (fst st1) /\ com_normal DC1 st1 st2) \/
+    (false_set DB (fst st1) /\ com_normal DC2 st1 st2);
   com_break := fun st1 st2 =>
-    (true_set DB st1 /\ com_break DC1 st1 st2) \/
-    (false_set DB st1 /\ com_break DC2 st1 st2);
+    (true_set DB (fst st1) /\ com_break DC1 st1 st2) \/
+    (false_set DB (fst st1) /\ com_break DC2 st1 st2);
   com_cont := fun st1 st2 =>
-    (true_set DB st1 /\ com_cont DC1 st1 st2) \/
-    (false_set DB st1 /\ com_cont DC2 st1 st2);
+    (true_set DB (fst st1) /\ com_cont DC1 st1 st2) \/
+    (false_set DB (fst st1) /\ com_cont DC2 st1 st2);
   com_error := fun st =>
-    (error_set DB st) \/
-    (true_set DB st /\ com_error DC1 st) \/
-    (false_set DB st /\ com_error DC2 st); |}.
+    (error_set DB (fst st)) \/
+    (true_set DB (fst st) /\ com_error DC1 st) \/
+    (false_set DB (fst st) /\ com_error DC2 st); |}.
 
 Fixpoint iter_loop_body (DC1 DC2 : com_denote) (n : nat) : com_denote :=
   match n with
@@ -265,6 +268,7 @@ Fixpoint ceval (c : com) : com_denote :=
   | CSkip => skip_sem
   | CBreak => break_sem
   | CCont => cont_sem
+  | CAss_set X a => set_sem X (aeval a)
   | CAss_load X a => load_sem X (aeval a)
   | CAss_store a1 a2 => store_sem (aeval a1) (aeval a2)
   | CSeq c1 c2 => seq_sem (ceval c1) (ceval c2)

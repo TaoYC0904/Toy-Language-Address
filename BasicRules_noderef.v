@@ -1,6 +1,6 @@
 Require Import Toy.Imp.
-Require Import Toy.Language.
-Require Import Toy.Embeddings.
+Require Import Toy.Language_noderef.
+Require Import Toy.Embeddings_noderef.
 Require Import Toy.UnifySL.implementation.
 
 Module BasicRulesSound.

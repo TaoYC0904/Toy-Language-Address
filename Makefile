@@ -14,25 +14,14 @@ FILES = \
 	configuration.v \
 	implementation.v \
 	interface.v \
-	BasicRules.v \
-	Embeddings.v \
+	BasicRules_noderef.v \
+	Embeddings_noderef.v \
 	Imp.v \
-	Language.v 
+	Language_noderef.v \
+	Language.v
 
 CoqProject:
 	@echo $(COQ_FLAG) > _CoqProject
-
-basic:
-	@echo COQC Imp.v
-	@$(COQC) $(COQ_FLAG) Imp.v
-	@echo COQC ./lib/RTClosure.v
-	@$(COQC) $(COQ_FLAG) RTClosure.v
-
-lang:
-	@echo COQC Language.v
-	@$(COQC) $(COQ_FLAG) Language.v
-	@echo COQC Embeddings.v
-	@$(COQC) $(COQ_FLAG) Embeddings.v
 
 lgen:
 	cd ../qinxiang-unifysl ; \
@@ -45,3 +34,19 @@ logic:
 	@$(COQC) $(COQ_FLAG) unifysl-interface/interface.v
 	@echo COQC unifysl-interface/implementation.v
 	@$(COQC) $(COQ_FLAG) unifysl-interface/implementation.v
+
+basic:
+	@echo COQC Imp.v
+	@$(COQC) $(COQ_FLAG) Imp.v
+	@echo COQC ./lib/RTClosure.v
+	@$(COQC) $(COQ_FLAG) RTClosure.v
+
+lang_noderef:
+	@echo COQC Language_noderef.v
+	@$(COQC) $(COQ_FLAG) Language_noderef.v
+	@echo COQC Embeddings_noderef.v
+	@$(COQC) $(COQ_FLAG) Embeddings_noderef.v
+
+lang:
+	@echo COQC Language_deref.v
+	@$(COQC) $(COQ_FLAG) Language_deref.v

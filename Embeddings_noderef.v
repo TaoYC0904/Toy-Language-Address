@@ -1,4 +1,4 @@
-Require Import Toy.Imp Toy.Language.
+Require Import Toy.Imp Toy.Language_noderef.
 Require Import Toy.UnifySL.implementation.
 Import T.
 
