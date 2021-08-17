@@ -244,7 +244,7 @@ Proof.
   destruct (Z.eq_dec v2 0); tauto.
 Qed.
 
-Lemma Assertion_sepcon : forall P X p v,
+Lemma Assertion_deref : forall P X p v,
   derives P (eqp (AId X) p) ->
   derives P (sepcon (mapsto p v) truep) ->
   derives P (eqp (ADeref (AId X)) v).
