@@ -50,5 +50,6 @@ Definition precon (p : Z) (l : list Z) : Assertion := listrep p l.
 Definition postcon (w : Z) (l : list Z) : Assertion := listrep w (rev l).
 
 Theorem listrev_spec : forall l x y,
-  valid (andp (eqp (AId p) x) (listrep x l)) listrev (andp (eqp (AId w) y) (listrep y (rev l))) falsep falsep.
+  valid (andp (eqp (AId p) x) (listrep x l)) listrev 
+    (andp (eqp (AId w) y) (listrep y (rev l))) falsep falsep.
 Admitted.
