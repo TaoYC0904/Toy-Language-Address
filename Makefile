@@ -15,7 +15,9 @@ FILES = \
 	implementation.v \
 	interface.v \
 	BasicRules_noderef.v \
+	BasicRules.v \
 	Embeddings_noderef.v \
+	Embeddings.v \
 	Imp.v \
 	Language_noderef.v \
 	Language.v
@@ -52,3 +54,6 @@ lang:
 	@$(COQC) $(COQ_FLAG) Language.v
 	@echo COQC Embeddings.v
 	@$(COQC) $(COQ_FLAG) Embeddings.v
+	@echo COQC BasicRules.v
+	@$(COQC) $(COQ_FLAG) BasicRules.v
+	

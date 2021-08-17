@@ -29,11 +29,11 @@ Definition store_update (s : store) (X : var) (v : option Z) : store :=
   | None => fun Y => 0
   end.
 
-Definition heap_update (h : heap) (p : addr) (v : option Z) : heap :=
-  fun q => if (Z.eq_dec p q) then v else h q.
-
 Definition subst (P : Assertion) (X : var) (v : Z) : Assertion :=
   fun st => P (store_update (fst st) X (Some v), snd st).
+
+Definition heap_update (h : heap) (p : addr) (v : option Z) : heap :=
+  fun q => if (Z.eq_dec p q) then v else h q.
 
 End Assertion_Shallow.
 
@@ -272,6 +272,88 @@ Proof.
     + destruct H0 as [? [? ?]].
       rewrite H0 in H2; inversion H2. }
   rewrite H3. tauto.
+Qed.
+
+Lemma Assertion_andp_subst : forall P Q X v,
+  andp (subst P X v) (subst Q X v) = subst (andp P Q) X v.
+Proof.
+  intros.
+  remember (andp (subst P X v) (subst Q X v)) as P1.
+  remember (subst (andp P Q) X v) as P2.
+  assert (forall st, P1 st = P2 st).
+  { intros. subst P1 P2. unfold andp, subst. tauto. }
+  eapply FunctionalExtensionality.functional_extensionality_dep. 
+  tauto.
+Qed.
+
+Lemma Assertion_orp_subst : forall P Q X v,
+  orp (subst P X v) (subst Q X v) = subst (orp P Q) X v.
+Proof.
+  intros.
+  remember (orp (subst P X v) (subst Q X v)) as P1.
+  remember (subst (orp P Q) X v) as P2.
+  assert (forall st, P1 st = P2 st).
+  { intros. subst P1 P2. unfold orp, subst. tauto. }
+  eapply FunctionalExtensionality.functional_extensionality_dep. 
+  tauto.
+Qed.
+
+Lemma Assertion_sepcon_subst : forall P Q X v,
+  sepcon (subst P X v) (subst Q X v) = subst (sepcon P Q) X v.
+Proof.
+  intros.
+  remember (sepcon (subst P X v) (subst Q X v)) as P1.
+  remember (subst (sepcon P Q) X v) as P2.
+  assert (forall st, P1 st <-> P2 st).
+  { intros. unfold iff; split; intros.
+    + subst P1 P2. UFsepcon.
+      unfold subst. destruct H as [st1 [st2 [? [? ?]]]].
+      remember (store_update (fst st1) X (Some v), snd st1) as st1'.
+      remember (store_update (fst st2) X (Some v), snd st2) as st2'.
+      exists st1', st2'.
+      split.
+      2:{ split; subst st1' st2'; unfold subst in *; tauto. }
+      UFjoin. destruct H as [[? ?] ?].
+      split.
+      { subst st1' st2'. unfold fst at 1 3 5 7. rewrite H, H2. tauto. }
+      UFheapjoin. rewrite osajoin in *. 
+      intros. specialize (H3 p).
+      destruct H3 as [? | [? | ?]].
+      - left.
+        destruct H3 as [v0 [? [? ?]]].
+        exists v0.
+        subst st1' st2'. unfold snd at 1 3 5. tauto.
+      - right. left.
+        destruct H3 as [v0 [? [? ?]]].
+        exists v0.
+        subst st1' st2'. unfold snd at 1 3 5. tauto.
+      - right. right.
+        destruct H3 as [? [? ?]].
+        subst st1' st2'. unfold snd at 1 3 5. tauto.
+    + subst P1 P2. UFsepcon.
+      unfold subst in *. destruct H as [st1 [st2 [? [? ?]]]].
+      admit.  
+
+  }
+  eapply FunctionalExtensionality.functional_extensionality_dep.
+  intros st. specialize (H st).
+
+
+
+
+Admitted.
+
+
+Lemma Assertion_exp_subst : forall {A : Type} (P : A -> Assertion) X v,
+  subst (exp P) X v = exp (fun a => subst (P a) X v).
+Proof.
+  intros.
+  remember (subst (exp P) X v) as P1.
+  remember (exp (fun a => subst (P a) X v)) as P2.
+  assert (forall st, P1 st = P2 st).
+  { intros. subst P1 P2. unfold subst, exp. tauto. }
+  eapply FunctionalExtensionality.functional_extensionality_dep. 
+  tauto.
 Qed.
 
 End AssertionDerivationRules.
