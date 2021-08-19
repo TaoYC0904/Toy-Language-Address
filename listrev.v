@@ -49,6 +49,6 @@ Fixpoint listrep (p : Z) (l : list Z) : Assertion :=
     | cons x l' => sepcon (mapsto p x) (exp (fun q => sepcon (mapsto (p + 1) q) (listrep q l')))
   end.
 
-Theorem listrev_spec : forall l x, exists y,
-  valid (sepcon (eqp (AId p) x) (listrep x l)) listrev (sepcon (eqp (AId w) y) (listrep y (rev l))) falsep falsep.
+Theorem listrev_spec : forall l x,
+  valid (andp (eqp (AId p) x) (listrep x l)) listrev (exp (fun y => (andp (eqp (AId w) y) (listrep y (rev l))))) falsep falsep.
 Admitted.
