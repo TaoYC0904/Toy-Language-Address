@@ -331,10 +331,78 @@ Proof.
       subst st1' st2'. unfold snd at 1 3 5. tauto.
   + subst P1 P2. UFsepcon.
     unfold subst. destruct H as [st1 [st2 [? [? ?]]]].
-    remember (store_update (fst st1) X (Some v), snd st1) as st1'.
-    remember (store_update (fst st2) X (Some v), snd st2) as st2'.
-    admit.
-Admitted.
+    remember (store_update (fst st1) X (Some (fst st X)), snd st1) as st1'.
+    remember (store_update (fst st2) X (Some (fst st X)), snd st2) as st2'.
+    exists st1', st2'.
+    split. UFjoin. split.
+    { subst st1' st2'. destruct H as [[? ?] ?].
+      split.
+      + unfold fst at 1, store_update.
+        assert (forall Y, (fun Y : var => if Nat.eq_dec Y X then fst st X else fst st1 Y) Y = fst st Y).
+        { intros.
+          destruct (Nat.eq_dec Y X); [subst; tauto | ].
+          rewrite H. unfold fst at 1, store_update.
+          destruct (Nat.eq_dec Y X); try tauto. }
+          eapply FunctionalExtensionality.functional_extensionality_dep.
+          tauto.
+      + unfold fst at 1, store_update.
+        assert (forall Y, (fun Y : var => if Nat.eq_dec Y X then fst st X else fst st2 Y) Y = fst st Y).
+        { intros.
+          destruct (Nat.eq_dec Y X); [subst; tauto | ].
+          rewrite H2. unfold fst at 1, store_update.
+          destruct (Nat.eq_dec Y X); try tauto. }
+          eapply FunctionalExtensionality.functional_extensionality_dep.
+          tauto. }
+    { destruct H as [[? ?] ?].
+      UFheapjoin. rewrite osajoin in *.
+      intros.
+      specialize (H3 p).
+      destruct H3 as [? | [? | ?]].
+      + left.
+        destruct H3 as [v0 [? [? ?]]].
+        exists v0.
+        subst st1'. unfold snd at 1.
+        subst st2'. unfold snd at 2.
+        unfold snd at 1 in H5. tauto.
+      + right. left.
+        destruct H3 as [v0 [? [? ?]]].
+        exists v0.
+        subst st1'. unfold snd at 1.
+        subst st2'. unfold snd at 2.
+        unfold snd at 1 in H5. tauto.
+      + right. right.
+        destruct H3 as [? [? ?]].
+        subst st1'. unfold snd at 1.
+        subst st2'. unfold snd at 2.
+        unfold snd at 1 in H5. tauto. }
+    assert (forall Y, store_update (fst st1') X (Some v) Y = fst st1 Y).
+    { intros. UFjoin. destruct H as [[? ?] ?].
+      unfold fst at 2 in H. rewrite H.
+      unfold store_update.
+      destruct (Nat.eq_dec Y X); try tauto.
+      subst st1'. unfold fst at 1, store_update.
+      destruct (Nat.eq_dec Y X); try tauto.
+      rewrite H. unfold store_update. 
+      destruct (Nat.eq_dec Y X); try tauto. }
+    assert (forall Y, store_update (fst st2') X (Some v) Y = fst st2 Y).
+    { intros. UFjoin. destruct H as [[? ?] ?].
+      unfold fst at 2 in H3. rewrite H3.
+      unfold store_update.
+      destruct (Nat.eq_dec Y X); try tauto.
+      subst st2'. unfold fst at 1, store_update.
+      destruct (Nat.eq_dec Y X); try tauto.
+      rewrite H3. unfold store_update. 
+      destruct (Nat.eq_dec Y X); try tauto. }
+    assert (store_update (fst st1') X (Some v) = fst st1).
+    { eapply FunctionalExtensionality.functional_extensionality_dep; tauto. }
+    rewrite H4.
+    assert (store_update (fst st2') X (Some v) = fst st2).
+    { eapply FunctionalExtensionality.functional_extensionality_dep; tauto. }
+    rewrite H5.
+    subst st1' st2'.
+    unfold snd at 1 3.
+    destruct st1, st2. unfold fst, snd. tauto. 
+Qed.
 
 Lemma Assertion_exp_subst : forall {A : Type} (P : A -> Assertion) X v,
   subst (exp P) X v = exp (fun a => subst (P a) X v).
