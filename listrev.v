@@ -41,21 +41,14 @@ Definition loop : com :=
 Definition listrev : com :=
   CSeq initialization loop.
 
+Definition NULL : Z := -1.
+
 Fixpoint listrep (p : Z) (l : list Z) : Assertion :=
   match l with
-    | nil => fun st => p = 0
-    | cons x l' => sepcon (sepcon (mapsto p x) (exp (fun q => andp (mapsto (p + 1) q) (listrep q l')))) truep
+    | nil => fun st => p = NULL
+    | cons x l' => sepcon (mapsto p x) (exp (fun q => sepcon (mapsto (p + 1) q) (listrep q l')))
   end.
 
-Definition precon (p : Z) (l : list Z) : Assertion := listrep p l.
-Definition postcon (w : Z) (l : list Z) : Assertion := listrep w (rev l).
-
-Theorem listrev_spec : forall l x y,
-  valid (andp (eqp (AId p) x) (listrep x l)) listrev 
-    (andp (eqp (AId w) y) (listrep y (rev l))) falsep falsep.
-Proof.
-  unfold valid. intros.
-  split.
-  { unfold not; intros.
-    simpl in *.
-  
+Theorem listrev_spec : forall l x, exists y,
+  valid (sepcon (eqp (AId p) x) (listrep x l)) listrev (sepcon (eqp (AId w) y) (listrep y (rev l))) falsep falsep.
+Admitted.
