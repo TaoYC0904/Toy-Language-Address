@@ -8,6 +8,7 @@ Import T.
 Import Denote_Aexp Denote_Bexp Denote_Com.
 Import Assertion_Shallow AssertionDerivationRules.
 Import Validity tacticforOSA.
+Import implementation.
 Import BasicRulesSound.
 
 Definition w : var := 1%nat.
@@ -52,4 +53,9 @@ Definition postcon (w : Z) (l : list Z) : Assertion := listrep w (rev l).
 Theorem listrev_spec : forall l x y,
   valid (andp (eqp (AId p) x) (listrep x l)) listrev 
     (andp (eqp (AId w) y) (listrep y (rev l))) falsep falsep.
-Admitted.
+Proof.
+  unfold valid. intros.
+  split.
+  { unfold not; intros.
+    simpl in *.
+  
