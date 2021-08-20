@@ -11,6 +11,10 @@ Require Import Logic.GeneralLogic.Base.
 Require Import Logic.MinimumLogic.Syntax.
 Require Import Logic.PropositionalLogic.Syntax.
 Require Import Logic.SeparationLogic.Syntax.
+Require Import Logic.SeparationLogic.Sound.Sound_Flat.
+Require Import Logic.SeparationLogic.ShallowEmbedded.PredicateSeparationLogic.
+Require Import Logic.PropositionalLogic.ShallowEmbedded.PredicatePropositionalLogic.
+Require Import Logic.GeneralLogic.ShallowEmbedded.PredicateAsLang.
 
 Definition var : Type := nat.
 Definition store : Type := var -> Z.
@@ -47,6 +51,8 @@ Definition heapSA : SeparationAlgebra heap := @fun_SA _ _ _ (@option_SA _ _ (s_S
 Definition stateJ : Join state := @prod_Join _ _ storeJ heapJ.
 
 Definition stateSA : SeparationAlgebra state := @prod_SA store heap storeJ heapJ storeSA heapSA.
+
+Definition stateR : KripkeModel.KI.Relation (state) := fun x y => x = y.
 
 Definition SepCon (P : Assertion) (Q : Assertion) : Assertion :=
   fun st => exists st1 st2, (P st1) /\ (Q st2) /\ (stateJ st1 st2 st).
@@ -85,6 +91,8 @@ Qed.
 Lemma sepcon_comm_impp : (forall x y : expr, provable (impp (sepcon x y) (sepcon y x))) .
 Proof.
   intros x y.
+  pose proof (@sound_sepcon_comm L _ _ (Build_Model state) (unit_kMD _) tt stateR stateJ stateSA (Pred_SM _) (Pred_kminSM _) (Pred_fsepconSM _) x y).
+
   exact (@sound_sepcon_comm L _ _ (Build_Model state) (unit_kMD _) tt stateR stateJ stateSA (Pred_SM _) (Pred_kminSM _) (Pred_fsepconSM _) x y).
 Qed.
 
