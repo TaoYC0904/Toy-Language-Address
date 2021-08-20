@@ -20,10 +20,6 @@ lgen:
 	./logic_gen.sh ../Fractional-Permission/unifysl-interface/configuration.v \
 	../Fractional-Permission/unifysl-interface/interface.v 
 
-logic_1:
-	@echo COQC unifysl-interface/interface.v
-	@$(COQC) $(COQ_FLAG) unifysl-interface/interface.v
-
 logic:
 	@echo COQC unifysl-interface/interface.v
 	@$(COQC) $(COQ_FLAG) unifysl-interface/interface.v
