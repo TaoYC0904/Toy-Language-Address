@@ -255,3 +255,19 @@ Definition delete_sem (X : var) : com_denote := {|
   com_break := BinRel.empty;
   com_cont := BinRel.empty;
   com_error := fun st => forall v, snd st (fst st X) <> Some (1%Q, v); |}.
+
+Fixpoint ceval (c : com) : com_denote := 
+  match c with
+  | CSkip => skip_sem
+  | CBreak => break_sem
+  | CCont => cont_sem
+  | CSet X a => set_sem X (aeval a)
+  | CStore a1 a2 => store_sem (aeval a1) (aeval a2)
+  | CSeq c1 c2 => seq_sem (ceval c1) (ceval c2)
+  | CIf b c1 c2 => if_sem (beval b) (ceval c1) (ceval c2)
+  | CFor c1 c2 => for_sem (ceval c1) (ceval c2)
+  | CNew X => new_sem X
+  | CDelete X => new_sem X
+  end.
+
+End Denote_Com.

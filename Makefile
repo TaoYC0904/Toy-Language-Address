@@ -30,5 +30,11 @@ logic:
 	@echo COQC unifysl-interface/implementation.v
 	@$(COQC) $(COQ_FLAG) unifysl-interface/implementation.v
 
+lang:
+	@echo COQC Language.v
+	@$(COQC) $(COQ_FLAG) Language.v
+	
+
+
 
 	
