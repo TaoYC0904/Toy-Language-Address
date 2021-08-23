@@ -25,18 +25,6 @@ Inductive bexp : Type :=
   | BNot (b : bexp)
   | BAnd (b1 b2 : bexp).
 
-Inductive com : Type :=
-  | CSkip
-  | CBreak
-  | CCont
-  | CSet (X : var) (a : aexp)
-  | CStore (a1 : aexp) (a2 : aexp)
-  | CSeq (c1 c2 : com)
-  | CIf (b : bexp) (c1 c2 : com)
-  | CFor (c1 c2 : com)
-  | CNew (X : var)
-  | CDelete (X : var).
-
 Inductive term : Type := 
   | TNum (n : Z)
   | TDenote (a : aexp)
@@ -58,6 +46,22 @@ Inductive Assertion_D : Type :=
   | DMapsto (pt : term) (vt : term)
   | DHasLock (L : addr) (pi : Q) (R : Assertion_D)
   | DReadytoRel (L : addr) (pi : Q) (R : Assertion_D).
+
+Inductive com : Type :=
+  | CSkip
+  | CBreak
+  | CCont
+  | CSet (X : var) (a : aexp)
+  | CStore (a1 : aexp) (a2 : aexp)
+  | CSeq (c1 c2 : com)
+  | CIf (b : bexp) (c1 c2 : com)
+  | CFor (c1 c2 : com)
+  | CNew (X : var)
+  | CDelete (X : var).
+  | CMake (p : addr) (Q : Assertion_D)
+  | CAcquire (p : addr)
+  | CRelease (p : addr)
+  | CFinalize (p : addr).
 
 Definition heap : Type := addr -> (option ((Q * Z) + (Q * (option unit) * Assertion_D))).
 Definition state : Type := store * heap.

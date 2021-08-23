@@ -42,15 +42,27 @@ Definition QZ_Join : Join (Q * Z):= @prod_Join _ _ Q_Join Z_Join.
 
 Definition QZ_SA : SeparationAlgebra (Q * Z) := @prod_SA Q Z Q_Join Z_Join Q_SA Z_SA.
 
-Definition bool' : Type := option unit.
+Definition optionunit_Join : Join (option unit) := @option_Join unit (@trivial_Join unit).
 
-Definition optionunit_Join : Join (option unit). := @option_Join unit (@trivial_Join unit).
+Definition optionunit_SA : SeparationAlgebra (option unit) := @option_SA _ _ trivial_SA.
 
+Definition lock1_Join : Join (Q * (option unit)) := @prod_Join _ _ Q_Join optionunit_Join.
 
+Definition lock1_SA : SeparationAlgebra (Q * (option unit)) := @prod_SA _ _ Q_Join optionunit_Join Q_SA optionunit_SA.
 
+Definition lock2_Join : Join (Assertion_D) := equiv_Join.
 
+Definition lock2_SA : SeparationAlgebra Assertion_D := equiv_SA.
 
-Definition heapJ : Join heap := @fun_Join _ _ (@option_Join _ (s_Join)).
+Definition lock_Join : Join (Q * (option unit) * Assertion_D) := @prod_Join _ _ lock1_Join lock2_Join.
+
+Definition lock_SA : SeparationAlgebra (Q * (option unit) * Assertion_D) := @prod_SA _ _ lock1_Join lock2_Join lock1_SA lock2_SA.
+
+Definition QZandLock_Join : Join (@sum_worlds (Q * Z) (Q * (option unit) * Assertion_D)) := @sum_Join _ _ QZ_Join lock_Join.
+
+Definition QZandLock_SA : SeparationAlgebra (@sum_worlds (Q * Z) (Q * (option unit) * Assertion_D)) := @sum_SA _ _ QZ_Join lock_Join QZ_SA lock_SA.
+
+Definition heapJ : Join heap := @fun_Join _ _ (@option_Join _ (QZandLock_Join)).
 
 Definition heapSA : SeparationAlgebra heap := @fun_SA _ _ _ (@option_SA _ _ (s_SA)).
 

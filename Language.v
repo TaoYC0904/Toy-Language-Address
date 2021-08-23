@@ -189,11 +189,11 @@ Fixpoint Assertion_Denote (d : Assertion_D) (st : state) : Prop :=
     | _, _ => False
   end
   | DHasLock L pi R => match snd st L with
-    | Some (inr ((q, None), r)) => (0 < q)%Q /\ r = R 
+    | Some (inr ((q, None), r)) => (Qeq q pi) /\ r = R 
     | _ => False 
   end
   | DReadytoRel L pi R => match snd st L with
-    | Some (inr ((q, Some tt), r)) => (0 < q)%Q /\ r = R 
+    | Some (inr ((q, Some tt), r)) => (Qeq q pi) /\ r = R 
     | _ => False 
   end 
 end.
@@ -205,11 +205,10 @@ End Denote_Assertion_D.
 
 
 
-(* 
-
 Module Denote_Com.
 Import Denote_Aexp.
 Import Denote_Bexp.
+Import Denote_Assertion_D.
 
 Definition skip_sem : com_denote := {|
   com_normal := BinRel.id;
@@ -240,10 +239,10 @@ Definition set_sem (X : var) (DA : state -> option Z): com_denote := {|
 
 Definition store_sem (DAL DAR : state -> option Z) : com_denote := {|
   com_normal := fun st1 st2 => match (DAL st1), (DAR st1) with
-    | Some p, Some v => match snd st1 p with
-      | Some (q, z) => Qeq q 1%Q /\ snd st2 p = Some (q, v) /\ (forall p', p' <> p -> snd st2 p' = snd st1 p') /\ 
-                       fst st2 = fst st1
-      | _ => False
+    | Some p, Some v => match (snd st1 p), (snd st2 p) with
+      | Some (inl (q1, z1)), Some (inl (q2, z2)) => Qeq q1 1%Q /\ Qeq q2 1%Q /\ z2 = v /\
+          (forall p', p' <> p -> snd st2 p' = snd st1 p') /\ fst st1 = fst st2
+      | _, _ => False
     end
     | _, _ => False
   end;
@@ -251,7 +250,7 @@ Definition store_sem (DAL DAR : state -> option Z) : com_denote := {|
   com_cont := BinRel.empty;
   com_error := fun st => match (DAL st), (DAR st) with
     | Some p, Some v => match snd st p with
-      | Some (q, z) => Qlt q 1%Q
+      | Some (inl (q, z)) => ~(Qeq q 1%Q)
       | _ => True 
     end
     | _, _ => True
@@ -298,11 +297,4 @@ Definition for_sem (DC1 DC2 : com_denote) : com_denote := {|
   com_cont := BinRel.empty;
   com_error := Sets.omega_union (fun n => com_error (iter_loop_body DC1 DC2 n)) |}.
 
-Definition new_sem (X : var) : com_denote := {|
-  com_normal := fun st1 st2 => 
-    exists p, fst st2 X = p /\ snd st1 p = None /\ snd st2 p = Some (1%Q, 0) /\
-      (forall p', p' <> p -> snd st2 p' = snd st1 p') /\
-      (forall Y, Y <> X -> fst st2 Y = fst st1 Y);
-  com_break := BinRel.empty;
-  com_cont := BinRel.empty;
-  com_error := Sets.empty |}. *)
+
