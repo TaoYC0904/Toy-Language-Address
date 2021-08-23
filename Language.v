@@ -313,5 +313,77 @@ Definition delete_sem (X : var) : com_denote := {|
     | _ => True 
   end |}.
 
-Definition 
+Definition make_sem (p : addr) (Q : Assertion_D) : com_denote := {|
+  com_normal := fun st1 st2 => match snd st1 p with
+    | Some (inl (1%Q, z)) => snd st2 p = Some (inr ((1%Q, None), Q)) /\
+        (forall p', p' <> p -> snd st2 p' = snd st1 p') /\ fst st1 = fst st2
+    | Some (inr ((1%Q, x), Q')) => snd st2 p = Some (inr ((1%Q, None), Q)) /\
+        (forall p', p' <> p -> snd st2 p' = snd st1 p') /\ fst st1 = fst st2
+    | _ => False 
+  end;
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
+  com_error := fun st => match snd st p with
+    | Some (inl (q, z)) => ~(Qeq q 1%Q)
+    | Some (inr ((q, x), Q')) => ~(Qeq q 1%Q)
+    | _ => True 
+  end |}.
 
+Definition acquire_sem (p : addr) : com_denote := {|
+  com_normal := fun st1 st2 => match snd st1 p with
+    | Some (inr ((q, None), Q)) => Qlt 0%Q q /\ snd st2 p = Some (inr ((q, Some tt), Q)) /\
+        (forall p', p' <> p -> snd st2 p = snd st1 p) /\ (fst st1 = fst st2)
+    | _ => False 
+  end;
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
+  com_error := fun st => match snd st p with
+    | Some (inr ((q, None), Q)) => Qeq q 0%Q 
+    | _ => True 
+  end |}.
+
+Definition release_sem (p : addr) : com_denote := {|
+  com_normal := fun st1 st2 => match snd st1 p with
+    | Some (inr ((q, Some tt), Q)) => snd st2 p = Some (inr ((q, None), Q)) /\
+        (forall p', p' <> p -> snd st2 p = snd st1 p) /\ (fst st1 = fst st2)
+    | _ => False 
+  end;
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
+  com_error := fun st => match snd st p with 
+    | Some (inr ((q, Some tt), Q)) => False 
+    | _ => True 
+  end |}.
+
+Definition finalize_sem (p : addr) : com_denote := {|
+  com_normal := fun st1 st2 => match snd st1 p with
+    | Some (inr ((1%Q, x), Q)) => snd st2 p = Some (inl (1%Q, 0)) /\
+        (forall p', p' <> p -> snd st2 p = snd st1 p) /\ (fst st1 = fst st2)
+    | _ => False 
+  end;
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
+  com_error := fun st => match snd st p with
+    | Some (inr ((1%Q, x), Q)) => False 
+    | _ => True 
+  end |}.
+
+Fixpoint ceval (c : com) : com_denote :=
+  match c with
+  | CSkip => skip_sem
+  | CBreak => break_sem 
+  | CCont => cont_sem 
+  | CSet X a => set_sem X (aeval a)
+  | CStore a1 a2 => store_sem (aeval a1) (aeval a2)
+  | CSeq c1 c2 => seq_sem (ceval c1) (ceval c2)
+  | CIf b c1 c2 => if_sem (beval b) (ceval c1) (ceval c2)
+  | CFor c1 c2 => for_sem (ceval c1) (ceval c2)
+  | CNew X => new_sem X 
+  | CDelete X => delete_sem X
+  | CMake p Q => make_sem p Q 
+  | CAcquire p => acquire_sem p 
+  | CRelease p => release_sem p 
+  | CFinalize p => finalize_sem p 
+  end.
+
+End Denote_Com.
