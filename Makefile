@@ -39,6 +39,10 @@ lib:
 	@echo COQC lib.v
 	@$(COQC) $(COQ_FLAG) lib.v
 
+type:
+	@echo COQC type.v
+	@$(COQC) $(COQ_FLAG) type.v
+
 lang_noderef:
 	@echo COQC Language_noderef.v
 	@$(COQC) $(COQ_FLAG) Language_noderef.v

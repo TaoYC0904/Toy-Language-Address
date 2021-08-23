@@ -1,17 +1,9 @@
-Require Import Toy.UnifySL.implementation.
+(* Require Import Toy.UnifySL.implementation. *)
 Require Import ZArith.
 Require Import QArith.
 Require Import Toy.lib.
+Require Import Toy.type.
 Open Scope Z.
-
-Inductive aexp : Type :=
-  | ANum (n : Z)
-  | AId (X : var)
-  | APlus (a1 a2 : aexp)
-  | AMinus (a1 a2 : aexp)
-  | AMult (a1 a2 : aexp)
-  | ADiv (a1 a2 : aexp)
-  | ADeref (a : aexp).
 
 Module Denote_Aexp.
 
@@ -46,11 +38,11 @@ Definition div_sem (da1 da2 : state -> option Z) : state -> option Z :=
 
 Definition deref_sem (da : state -> option Z) : state -> option Z :=
   fun st => match da st with
-    | Some v => match snd st v with
-        | Some (q, v') => Some v'
-        | _ => None
-    end
-    | _ => None
+    | Some p => match snd st p with
+      | Some (inl (q, v)) => if (Qlt_le_dec 0%Q q) then Some v else None 
+      | _ => None
+    end 
+    | _ => None 
   end.
 
 Fixpoint aeval (a : aexp) : state -> option Z :=
@@ -65,19 +57,6 @@ Fixpoint aeval (a : aexp) : state -> option Z :=
   end.
 
 End Denote_Aexp.
-
-Inductive bexp : Type :=
-  | BTrue
-  | BFalse
-  | BEq (a1 a2 : aexp)
-  | BLe (a1 a2 : aexp)
-  | BNot (b : bexp)
-  | BAnd (b1 b2 : bexp).
-
-Record bexp_denote : Type := {
-  true_set : state -> Prop;
-  false_set : state -> Prop;
-  error_set : state -> Prop; }.
 
 Definition opt_test (R : Z -> Z -> Prop) (X Y : state -> option Z) : bexp_denote :=
 {|
@@ -130,23 +109,103 @@ Fixpoint beval (b : bexp) : bexp_denote :=
 
 End Denote_Bexp.
 
-Inductive com : Type :=
-  | CSkip
-  | CBreak
-  | CCont
-  | CSet (X : var) (a : aexp)
-  | CStore (a1 : aexp) (a2 : aexp)
-  | CSeq (c1 c2 : com)
-  | CIf (b : bexp) (c1 c2 : com)
-  | CFor (c1 c2 : com)
-  | CNew (X : var)
-  | CDelete (X : var).
+Module Denote_Term.
+Import Denote_Aexp.
 
-Record com_denote : Type := {
-  com_normal : state -> state -> Prop;
-  com_break : state -> state -> Prop;
-  com_cont : state -> state -> Prop;
-  com_error : state -> Prop }.
+Definition add_term (a b : option Z) : option Z :=
+  match a, b with 
+  | Some n1, Some n2 => Some (n1 + n2)
+  | _, _ => None
+  end.
+
+Definition sub_term (a b : option Z) : option Z :=
+  match a, b with
+  | Some n1, Some n2 => Some (n1 - n2)
+  | _, _ => None
+  end. 
+
+Definition mul_term (a b : option Z) : option Z :=
+  match a, b with
+  | Some n1, Some n2 => Some (n1 * n2)
+  | _, _ => None
+  end.
+
+Definition div_term (a b : option Z) : option Z :=
+  match a, b with
+  | Some n1, Some n2 => if (Z.eq_dec n2 0) then None else Some (n1 / n2)
+  | _, _ => None
+  end.
+
+Definition deref_term (a : option Z) (st : state) : option Z :=
+  match a with
+  | Some p => match snd st p with
+    | Some (inl (q, z)) => Some z 
+    | _ => None
+  end
+  | _ => None
+  end.
+
+Fixpoint term_denote (t : term) : state -> option Z :=
+  fun st => match t with
+  | TNum n => Some n
+  | TDenote a => aeval a st 
+  | TPlus t1 t2 => add_term (term_denote t1 st) (term_denote t2 st)
+  | TMinus t1 t2 => sub_term (term_denote t1 st) (term_denote t2 st)
+  | TMult t1 t2 => mul_term (term_denote t1 st) (term_denote t2 st)
+  | TDiv t1 t2 => div_term (term_denote t1 st) (term_denote t2 st)
+  | TDeref t => deref_term (term_denote t st) st
+  end.
+
+End Denote_Term.
+
+Module Denote_Assertion_D.
+Import Denote_Term.
+Import Denote_Bexp.
+
+Fixpoint Assertion_Denote (d : Assertion_D) (st : state) : Prop :=
+  match d with
+  | DLe t1 t2 => match (term_denote t1 st), (term_denote t2 st) with
+    | Some n1, Some n2 => n1 <= n2
+    | _, _ => False
+  end
+  | DLt t1 t2 => match (term_denote t1 st), (term_denote t2 st) with
+    | Some n1, Some n2 => n1 < n2
+    | _, _ => False
+  end
+  | DEq t1 t2 => match (term_denote t1 st), (term_denote t2 st) with
+    | Some n1, Some n2 => n1 = n2
+    | _, _ => False
+  end
+  | DInj b => true_set (beval b) st 
+  | DProp P => P
+  | DOr d1 d2 => (Assertion_Denote d1 st) \/ (Assertion_Denote d2 st)
+  | DAnd d1 d2 => (Assertion_Denote d1 st) /\ (Assertion_Denote d2 st)
+  | DNot d => ~ (Assertion_Denote d st) 
+  | DMapsto pt vt => match (term_denote pt st), (term_denote vt st) with
+    | Some p, Some v => match snd st p with
+      | Some (inl (q, z)) => z = v
+      | _ => False 
+    end
+    | _, _ => False
+  end
+  | DHasLock L pi R => match snd st L with
+    | Some (inr ((q, None), r)) => (0 < q)%Q /\ r = R 
+    | _ => False 
+  end
+  | DReadytoRel L pi R => match snd st L with
+    | Some (inr ((q, Some tt), r)) => (0 < q)%Q /\ r = R 
+    | _ => False 
+  end 
+end.
+
+End Denote_Assertion_D.
+
+
+
+
+
+
+(* 
 
 Module Denote_Com.
 Import Denote_Aexp.
@@ -246,4 +305,4 @@ Definition new_sem (X : var) : com_denote := {|
       (forall Y, Y <> X -> fst st2 Y = fst st1 Y);
   com_break := BinRel.empty;
   com_cont := BinRel.empty;
-  com_error := Sets.empty |}.
+  com_error := Sets.empty |}. *)

@@ -3,6 +3,8 @@ Require Import QArith.
 Require Import Lqa.
 Require Import Coq.micromega.Psatz.
 Require Import Toy.UnifySL.interface.
+Require Import Toy.lib.
+Require Import Toy.type.
 Require Import Logic.SeparationLogic.Model.SeparationAlgebra.
 Require Import Logic.SeparationLogic.Model.OrderedSA.
 Require Import Logic.SeparationLogic.Model.OSAGenerators.
@@ -16,17 +18,11 @@ Require Import Logic.SeparationLogic.ShallowEmbedded.PredicateSeparationLogic.
 Require Import Logic.PropositionalLogic.ShallowEmbedded.PredicatePropositionalLogic.
 Require Import Logic.GeneralLogic.ShallowEmbedded.PredicateAsLang.
 
-Definition var : Type := nat.
-Definition store : Type := var -> Z.
-Definition addr : Type := Z.
-Definition heap : Type := addr -> option (Q * Z).
-Definition state : Type := store * heap.
-Definition Assertion : Type := state -> Prop.
-
 Definition storeJ : Join store := equiv_Join.
 
 Definition storeSA : SeparationAlgebra store := equiv_SA.
 
+Open Scope Q.
 Definition Q_Join : Join Q := fun q1 q2 q => 
   0 < q1 /\ 0 < q2 /\ 0 < q /\ q1 <= 1 /\ q2 <= 1 /\ q <= 1 /\ Qeq q (q1 + q2).
 
@@ -36,13 +32,23 @@ Proof.
   [| exists (mxyz - mx)]; repeat (split; try tauto; lra).
 Qed.
 
+Open Scope Z.
+
 Definition Z_Join : Join Z := equiv_Join.
 
 Definition Z_SA : SeparationAlgebra Z:= equiv_SA.
 
-Definition s_Join : Join (Q * Z):= @prod_Join _ _ Q_Join Z_Join.
+Definition QZ_Join : Join (Q * Z):= @prod_Join _ _ Q_Join Z_Join.
 
-Definition s_SA : SeparationAlgebra (Q * Z) := @prod_SA Q Z Q_Join Z_Join Q_SA Z_SA.
+Definition QZ_SA : SeparationAlgebra (Q * Z) := @prod_SA Q Z Q_Join Z_Join Q_SA Z_SA.
+
+Definition bool' : Type := option unit.
+
+Definition optionunit_Join : Join (option unit). := @option_Join unit (@trivial_Join unit).
+
+
+
+
 
 Definition heapJ : Join heap := @fun_Join _ _ (@option_Join _ (s_Join)).
 
