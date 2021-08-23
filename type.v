@@ -57,7 +57,7 @@ Inductive com : Type :=
   | CIf (b : bexp) (c1 c2 : com)
   | CFor (c1 c2 : com)
   | CNew (X : var)
-  | CDelete (X : var).
+  | CDelete (X : var)
   | CMake (p : addr) (Q : Assertion_D)
   | CAcquire (p : addr)
   | CRelease (p : addr)

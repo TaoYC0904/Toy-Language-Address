@@ -200,11 +200,6 @@ end.
 
 End Denote_Assertion_D.
 
-
-
-
-
-
 Module Denote_Com.
 Import Denote_Aexp.
 Import Denote_Bexp.
@@ -297,4 +292,26 @@ Definition for_sem (DC1 DC2 : com_denote) : com_denote := {|
   com_cont := BinRel.empty;
   com_error := Sets.omega_union (fun n => com_error (iter_loop_body DC1 DC2 n)) |}.
 
+Definition new_sem (X : var) : com_denote := {|
+  com_normal := fun st1 st2 =>
+    exists p, fst st2 X = p /\ snd st1 p = None /\ snd st2 p = Some (inl (1%Q, 0)) /\
+      (forall p', p' <> p -> snd st2 p = snd st1 p) /\
+      (forall Y, Y <> X -> fst st2 Y = fst st1 Y);
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
+  com_error := Sets.empty |}.
+
+Definition delete_sem (X : var) : com_denote := {|
+  com_normal := fun st1 st2 => match fst st1 X with
+    | p => exists z, snd st1 p = Some (inl (1%Q, z)) /\ snd st2 p = None /\ 
+        (forall p', p' <> p -> snd st2 p' = snd st1 p') /\ fst st1 = fst st2
+  end;
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
+  com_error := fun st => match snd st (fst st X) with
+    | Some (inl (q, z)) => ~(Qeq q 1%Q) 
+    | _ => True 
+  end |}.
+
+Definition 
 
