@@ -4,7 +4,7 @@ Require Import Coq.micromega.Psatz.
 Require Import Toy.lib.
 Open Scope Z.
 
-Definition var : Type := Z.
+Definition var : Type := nat.
 Definition store : Type := var -> Z.
 Definition addr : Type := Z.
 

@@ -39,21 +39,12 @@ lib:
 	@echo COQC lib.v
 	@$(COQC) $(COQ_FLAG) lib.v
 
-type:
+lang:
 	@echo COQC type.v
 	@$(COQC) $(COQ_FLAG) type.v
-
-lang_noderef:
-	@echo COQC Language_noderef.v
-	@$(COQC) $(COQ_FLAG) Language_noderef.v
-	@echo COQC Embeddings_noderef.v
-	@$(COQC) $(COQ_FLAG) Embeddings_noderef.v
-
-lang:
+	@echo COQC unifysl-interface/implementation.v
+	@$(COQC) $(COQ_FLAG) unifysl-interface/implementation.v
 	@echo COQC Language.v
 	@$(COQC) $(COQ_FLAG) Language.v
 	@echo COQC Embeddings.v
 	@$(COQC) $(COQ_FLAG) Embeddings.v
-	@echo COQC BasicRules.v
-	@$(COQC) $(COQ_FLAG) BasicRules.v
-	
