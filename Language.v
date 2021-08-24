@@ -264,7 +264,7 @@ Definition if_sem (DB : bexp_denote) (DC1 DC2 : com_denote) : com_denote := {|
     (BinRel.concat (BinRel.testrel (false_set DB)) (com_break DC2));
   com_cont := BinRel.union (BinRel.concat (BinRel.testrel (true_set DB)) (com_cont DC1))
     (BinRel.concat (BinRel.testrel (false_set DB)) (com_cont DC2));
-  com_error := Sets.union (false_set DB) 
+  com_error := Sets.union (error_set DB) 
     (Sets.union (Sets.intersect (true_set DB) (com_error DC1)) (Sets.intersect (false_set DB) (com_error DC2)))|}.
 
 Fixpoint iter_loop_body (DC1 DC2 : com_denote) (n : nat) : com_denote := match n with
