@@ -51,3 +51,108 @@ Definition valid (P : Assertion) (c : com) (Q Rb Rc : Assertion) : Prop :=
     (com_cont (ceval c) st1 st2 -> Rc st2).
 
 End Validity.
+
+Module tactics.
+Import Assertion_Shallow.
+
+Ltac ufsepcon := unfold sepcon; unfold SepCon.
+Ltac ufSepcon H := unfold sepcon in H; unfold SepCon in H.
+Ltac ufstatej := unfold stateJ; unfold OSAGenerators.prod_Join; unfold SeparationAlgebra.join.
+Ltac ufStatej H := unfold stateJ in H; unfold OSAGenerators.prod_Join in H; unfold SeparationAlgebra.join.
+Ltac ufstorej := unfold storeJ; unfold OSAGenerators.equiv_Join.
+Ltac ufStorej H := unfold storeJ in H; unfold OSAGenerators.equiv_Join in H.
+Ltac ufheapj := unfold heapJ; unfold OSAGenerators.fun_Join; unfold SeparationAlgebra.join; unfold OSAGenerators.option_Join.
+Ltac ufHeapj H := unfold heapJ in H; unfold OSAGenerators.fun_Join in H; unfold SeparationAlgebra.join in H; unfold OSAGenerators.option_Join in H.
+
+(* Lemma heapoptionj : forall (st st1 st2 : state) (x : addr),
+@OSAGenerators.option_join (Q * Z + Q * option unit * Assertion_D) QZandLock_Join
+(snd st1 x) (snd st2 x) (snd st x) <-> 
+  (snd st1 x = None /\ snd st2 x = None /\ snd st x = None) \/
+  (exists v, snd st1 x = Some v /\ snd st2 x = None /\ snd st x = Some v) \/
+  (exists v, snd st1 x = None /\ snd st2 x = Some v /\ snd st x = Some v) \/
+  (exists v1 v2 v, snd st1 x = Some v1 /\ snd st2 x = Some v2 /\ snd st x = Some v /\ QZandLock_Join v1 v2 v).
+Proof.
+  unfold iff. split.
+  + intros.
+    destruct H.
+    - tauto.
+    - right. right. left. exists a. tauto.
+    - right. left. exists a. tauto.
+    - right. right. right. exists a, b, c. tauto.
+  + intros.
+    destruct H as [? | [? | [? | ?]]].
+    - destruct H as [? [? ?]]. rewrite H, H0, H1. constructor.
+    - destruct H as [v [? [? ?]]]. rewrite H, H0, H1. constructor.
+    - destruct H as [v [? [? ?]]]. rewrite H, H0, H1. constructor.
+    - destruct H as [v1 [v2 [v [? [? [? ?]]]]]].
+      rewrite H, H0, H1. constructor. tauto.
+Qed. *)
+
+Lemma ufoptionj : forall {A : Type} (J : SeparationAlgebra.Join A) (a1 a2 a : option A) , 
+  @OSAGenerators.option_join A J a1 a2 a <->
+  (a1 = None /\ a2 = None /\ a = None) \/
+  (exists v, a1 = None /\ a2 = Some v /\ a = Some v) \/
+  (exists v, a1 = Some v /\ a2 = None /\ a = Some v) \/
+  (exists v1 v2 v, a1 = Some v1 /\ a2 = Some v2 /\ a = Some v /\ J v1 v2 v).
+Proof.
+  unfold iff; split; intros.
+  + destruct H.
+    - left; tauto.
+    - right; left; exists a; tauto.
+    - right; right; left; exists a; tauto.
+    - right; right; right. exists a,b,c; tauto.
+  + destruct H as [? | [? | [? | ?]]].
+    - destruct H as [? [? ?]]. rewrite H, H0, H1; constructor.
+    - destruct H as [v [? [? ?]]]. rewrite H, H0, H1; constructor.
+    - destruct H as [v [? [? ?]]]. rewrite H, H0, H1; constructor.
+    - destruct H as [v1 [v2 [v [? [? [? ?]]]]]].
+      rewrite H, H0, H1; constructor; tauto.
+Qed.
+
+Lemma ufsumj : forall {A B : Type} (J1 : SeparationAlgebra.Join A) (J2 : SeparationAlgebra.Join B) (a1 a2 a : A + B),
+  @OSAGenerators.sum_join A B J1 J2 a1 a2 a <->
+  (exists al1 al2 al, a1 = inl al1 /\ a2 = inl al2 /\ a = inl al /\ J1 al1 al2 al) \/
+  (exists ar1 ar2 ar, a1 = inr ar1 /\ a2 = inr ar2 /\ a = inr ar /\ J2 ar1 ar2 ar).
+Proof.
+  unfold iff; split; intros.
+  + destruct H.
+    - left; exists a, b, c; tauto.
+    - right; exists a, b, c; tauto.
+  + destruct H.
+    - destruct H as [al1 [al2 [al [? [? [? ?]]]]]].
+      rewrite H, H0, H1. constructor; tauto.
+    - destruct H as [ar1 [ar2 [ar [? [? [? ?]]]]]].
+      rewrite H, H0, H1. constructor; tauto.
+Qed.
+
+Goal forall P R st (st1 st2 : state), sepcon P R st.
+Proof.
+  intros.
+  ufsepcon.
+  exists st1, st2.
+  split; try split. admit. admit.
+  ufstatej.
+  split.
+  + ufstorej. admit.
+  + (*unfold heapJ.
+    unfold OSAGenerators.fun_Join.
+    unfold SeparationAlgebra.join.
+    unfold OSAGenerators.option_Join. *)
+    ufheapj.
+    intros.
+    (* pose proof (@ufoptionj _  (snd st1 x) (snd st2 x) (snd st x) QZandLock_Join).
+    rewrite H. clear H. right. right. right.
+    repeat (exists (inl (1%Q, 1))).
+    split; try split; try split.
+    admit. admit. admit.
+    unfold QZandLock_Join.
+    unfold OSAGenerators.sum_Join.
+    remember (inl (1%Q, 1)) as y. *)
+
+
+
+
+
+Admitted.
+
+End tactics.

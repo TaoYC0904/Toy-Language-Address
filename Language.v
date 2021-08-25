@@ -225,7 +225,7 @@ Definition cont_sem : com_denote := {|
 
 Definition set_sem (X : var) (DA : state -> option Z): com_denote := {|
   com_normal := fun st1 st2 => match DA st1 with
-    | Some v => fst st2 X = v /\ (forall Y, Y <> X -> fst st2 Y = fst st1 Y)
+    | Some v => fst st2 X = v /\ (forall Y, Y <> X -> fst st2 Y = fst st1 Y) /\ snd st2 = snd st1
     | _ => False
   end;
   com_break := BinRel.empty;
