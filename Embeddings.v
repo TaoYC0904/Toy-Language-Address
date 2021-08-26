@@ -48,7 +48,13 @@ Definition heap_update (h : heap) (p : addr) (v : option Z) : heap :=
     | _ => None
   end else h p' 
   | _ => fun p' => None 
-  end.  
+  end. 
+  
+Definition hasLock (L : addr) (pi : Q) (R : Assertion_D) : Assertion :=
+  fun st => snd st L = Some (inr (pi, None, R)).
+
+Definition readytoRelease (L : addr) (pi : Q) (R : Assertion_D) : Assertion :=
+  fun st => snd st L = Some (inr (pi, Some tt, R)).
 
 End Assertion_Shallow.
 

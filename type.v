@@ -45,7 +45,8 @@ Inductive Assertion_D : Type :=
   | DNot (d : Assertion_D)
   | DMapsto (pt : term) (vt : term)
   | DHasLock (L : addr) (pi : Q) (R : Assertion_D)
-  | DReadytoRel (L : addr) (pi : Q) (R : Assertion_D).
+  | DReadytoRel (L : addr) (pi : Q) (R : Assertion_D)
+  | DSepcon (d1 d2 : Assertion_D).
 
 Inductive com : Type :=
   | CSkip
@@ -60,8 +61,8 @@ Inductive com : Type :=
   | CDelete (X : var)
   | CMake (p : addr) (Q : Assertion_D)
   | CAcquire (p : addr)
-  | CRelease (p : addr)
-  | CFinalize (p : addr).
+  | CRelease (p : addr) (Q : Assertion_D)
+  | CFinalize (p : addr) .
 
 Definition heap : Type := addr -> (option ((Q * Z) + (Q * (option unit) * Assertion_D))).
 Definition state : Type := store * heap.

@@ -3,6 +3,8 @@ Require Import ZArith.
 Require Import QArith.
 Require Import Toy.lib.
 Require Import Toy.type.
+Require Import Toy.UnifySL.implementation.
+Import T.
 Open Scope Z.
 
 Module Denote_Aexp.
@@ -189,13 +191,15 @@ Fixpoint Assertion_Denote (d : Assertion_D) (st : state) : Prop :=
     | _, _ => False
   end
   | DHasLock L pi R => match snd st L with
-    | Some (inr ((q, None), r)) => (Qeq q pi) /\ r = R 
+    | Some (inr ((q, None), r)) => q = pi /\ r = R 
     | _ => False 
   end
   | DReadytoRel L pi R => match snd st L with
-    | Some (inr ((q, Some tt), r)) => (Qeq q pi) /\ r = R 
+    | Some (inr ((q, Some tt), r)) => q = pi /\ r = R 
     | _ => False 
   end 
+  | DSepcon d1 d2 => exists st1 st2, 
+    (Assertion_Denote d1 st1) /\ (Assertion_Denote d2 st2) /\ stateJ st1 st2 st
 end.
 
 End Denote_Assertion_D.
@@ -313,23 +317,62 @@ Definition delete_sem (X : var) : com_denote := {|
     | _ => True 
   end |}.
 
-Definition make_sem (p : addr) (Q : Assertion_D) : com_denote := {|
-  com_normal := fun st1 st2 => match snd st1 p with
-    | Some (inl (1%Q, z)) => snd st2 p = Some (inr ((1%Q, None), Q)) /\
-        (forall p', p' <> p -> snd st2 p' = snd st1 p') /\ fst st1 = fst st2
-    | Some (inr ((1%Q, x), Q')) => snd st2 p = Some (inr ((1%Q, None), Q)) /\
-        (forall p', p' <> p -> snd st2 p' = snd st1 p') /\ fst st1 = fst st2
+Definition mapsto_sem (st : state) (p : addr) (v : Z) (pi : Q) :=
+  snd st p = Some (inl (pi, v)) /\ (forall p', p' <> p -> snd st p = None).
+
+Definition emp_sem (st : state) := forall p, snd st p = None.
+
+Definition heap_update (h : heap) (p : addr) v : heap := 
+  fun p' => if (Z.eq_dec p' p) then v else h p'.
+
+Definition make_sem (l : addr) (P : Assertion_D) : com_denote := {|
+  com_normal := fun st1 st2 => exists st11 st12, 
+    stateJ st11 st12 st1 /\ Assertion_Denote P st11 /\ st2 = (fst st12, heap_update (snd st12) l (Some (inr (1%Q, None, P))));
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
+  com_error := fun st => ~ (exists st11 st12, stateJ st11 st12 st /\ Assertion_Denote P st11) |}.
+
+Definition finalize_sem (l : addr) : com_denote := {|
+  com_normal := fun st1 st2 => match snd st1 l with
+    | Some (inr (1%Q, Some tt, P)) => exists st21 st22,
+        stateJ st21 st22 st2 /\ Assertion_Denote P st21 /\ st22 = (fst st1, heap_update (snd st1) l None)
     | _ => False 
   end;
   com_break := BinRel.empty;
   com_cont := BinRel.empty;
-  com_error := fun st => match snd st p with
-    | Some (inl (q, z)) => ~(Qeq q 1%Q)
-    | Some (inr ((q, x), Q')) => ~(Qeq q 1%Q)
+  com_error := fun st => match snd st l with
+    | Some (inr (1%Q, Some tt, P)) => False 
     | _ => True 
   end |}.
 
-Definition acquire_sem (p : addr) : com_denote := {|
+Definition acquire_sem (l : addr) : com_denote := {|
+  com_normal := fun st1 st2 => match snd st1 l with
+    | Some (inr (q, none, P)) => exists st21 st22,
+        stateJ st21 st22 st2 /\ Assertion_Denote P st21 /\ st22 = (fst st1, heap_update (snd st1) l (Some (inr (q, Some tt, P))))
+    | _ => False 
+  end;
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
+  com_error := fun st => match snd st l with
+    | Some (inr (q, none, P)) => False 
+    | _ => True 
+  end |}.
+
+Definition release_sem (l : addr) (Q : Assertion_D) : com_denote := {|
+  com_normal := fun st1 st2 => match snd st1 l with
+    | Some (inr (q, Some tt, P)) => exists st11 st12, 
+        stateJ st11 st12 st1 /\ Assertion_Denote P st11 /\ Assertion_Denote (DSepcon Q (DProp True)) st12 /\
+        st2 = (fst st12, heap_update (snd st12) l (Some (inr (q, None, P))))
+    | _ => False 
+  end;
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
+  com_error := fun st => match snd st l with
+    | Some (inr (q, Some tt, P)) => False 
+    | _ => True 
+  end |}.
+
+(* Definition acquire_sem (p : addr) : com_denote := {|
   com_normal := fun st1 st2 => match snd st1 p with
     | Some (inr ((q, None), Q)) => Qlt 0%Q q /\ snd st2 p = Some (inr ((q, Some tt), Q)) /\
         (forall p', p' <> p -> snd st2 p = snd st1 p) /\ (fst st1 = fst st2)
@@ -338,7 +381,7 @@ Definition acquire_sem (p : addr) : com_denote := {|
   com_break := BinRel.empty;
   com_cont := BinRel.empty;
   com_error := fun st => match snd st p with
-    | Some (inr ((q, None), Q)) => Qeq q 0%Q 
+    | Some (inr ((q, None), Q)) => q = 0%Q
     | _ => True 
   end |}.
 
@@ -353,20 +396,7 @@ Definition release_sem (p : addr) : com_denote := {|
   com_error := fun st => match snd st p with 
     | Some (inr ((q, Some tt), Q)) => False 
     | _ => True 
-  end |}.
-
-Definition finalize_sem (p : addr) : com_denote := {|
-  com_normal := fun st1 st2 => match snd st1 p with
-    | Some (inr ((1%Q, x), Q)) => snd st2 p = Some (inl (1%Q, 0)) /\
-        (forall p', p' <> p -> snd st2 p = snd st1 p) /\ (fst st1 = fst st2)
-    | _ => False 
-  end;
-  com_break := BinRel.empty;
-  com_cont := BinRel.empty;
-  com_error := fun st => match snd st p with
-    | Some (inr ((1%Q, x), Q)) => False 
-    | _ => True 
-  end |}.
+  end |}. *)
 
 Fixpoint ceval (c : com) : com_denote :=
   match c with
@@ -382,8 +412,8 @@ Fixpoint ceval (c : com) : com_denote :=
   | CDelete X => delete_sem X
   | CMake p Q => make_sem p Q 
   | CAcquire p => acquire_sem p 
-  | CRelease p => release_sem p 
-  | CFinalize p => finalize_sem p 
+  | CRelease p Q => release_sem p Q
+  | CFinalize p => finalize_sem p
   end.
 
 End Denote_Com.

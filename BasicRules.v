@@ -239,7 +239,7 @@ Proof.
       tauto.
 Qed.
 
-Theorem hoare_store_sound : forall P e1 e2 p v,
+Theorem store_rule_sound : forall P e1 e2 p v,
   derives P (andp (eqp e1 p) (eqp e2 v)) ->
   valid (sepcon P (fullper_ p)) (CStore e1 e2) (sepcon P (fullper p v)) falsep falsep.
 Proof.
@@ -398,12 +398,7 @@ Proof.
         rewrite H9.
         exists vv1, vv2, vv. tauto. }
   simpl. unfold BinRel.empty. tauto.
-Qed. 
-        
+Qed.
 
 
-
-
-
-      
 
