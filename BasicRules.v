@@ -241,7 +241,7 @@ Qed.
 
 Theorem hoare_store_sound : forall P e1 e2 p v,
   derives P (andp (eqp e1 p) (eqp e2 v)) ->
-  valid (sepcon P (fullper p)) (CStore e1 e2) (sepcon P (mapsto p v)) falsep falsep.
+  valid (sepcon P (fullper_ p)) (CStore e1 e2) (sepcon P (fullper p v)) falsep falsep.
 Proof.
   unfold derives, valid. intros.
   unfold andp in H.
@@ -268,7 +268,7 @@ Proof.
         exists x; tauto. }
     destruct H8 as [x ?].
     rewrite H8 in H3.
-    unfold fullper in H1. destruct H1 as [[z ?] ?].
+    unfold fullper_ in H1. destruct H1 as [[z ?] ?].
     assert (snd st1 p = Some (inl (1%Q, z))).
     { ufStatej H2. destruct H2.
       ufHeapj H10. specialize (H10 p). rewrite ufoptionj in H10.
@@ -300,113 +300,106 @@ Proof.
     rewrite H8 in H10. inversion H10.
     rewrite H12 in H3. lra. }
   split.
-  { intros. 
-    pose proof (H st11 H0).
-    unfold eqp in H4; destruct H4.
+  { intros.
+    ufsepcon. specialize (H st11 H0). unfold eqp in H. destruct H.
     assert (aeval e1 st1 = Some p).
-    { eapply andjoin1; [exact H4 | exact H2]. }
+    { eapply andjoin1; [exact H | exact H2]. }
     assert (aeval e2 st1 = Some v).
-    { eapply andjoin1; [exact H5 | exact H2]. }
-    ufsepcon. 
-    remember (fst st12, heap_update (snd st12) p (Some v)) as st22.
+    { eapply andjoin1; [exact H4 | exact H2]. }
+    simpl in H3. rewrite H5, H6 in H3.
+    remember (snd st1 p) as h1p.
+    destruct h1p; [| inversion H3].
+    destruct s; [| inversion H3].
+    rename p0 into h1p. destruct h1p as (h1pq, h1pz).
+    remember (snd st2 p) as h2p.
+    destruct h2p; [| inversion H3].
+    destruct s; [| inversion H3].
+    rename p0 into h2p. destruct h2p as (h2pq, h2pz).
+    destruct H3 as [? [? [? [? ?]]]]. subst.
+    unfold fullper_ in H1. destruct H1 as [[h1pz' ?] ?].
+    remember (heap_update (snd st12) p (Some v)) as h22.
+    remember (fst st12, h22) as st22.
     exists st11, st22.
-    split; try tauto. split.
-    { unfold mapsto. unfold fullper in H1.
-      destruct H1 as [[v' ?] ?].
-      split.
-      + subst st22. unfold snd at 1.
-        unfold heap_update. destruct (Z.eq_dec p p); try tauto.
-        exists 1%Q. rewrite H1. tauto.
-      + subst st22. intros.
-        unfold snd at 1. unfold heap_update.
+    split; [tauto |].
+    assert (fullper p v st22).
+    { unfold fullper. split.
+      + subst st22 h22. unfold snd at 1, heap_update.
+        destruct (Z.eq_dec p p); try tauto.
+        rewrite H1. tauto.
+      + intros.
+        subst st22 h22. unfold snd at 1, heap_update.
         destruct (Z.eq_dec p' p); try tauto.
-        exact (H8 p' n). }
-    simpl in H3; rewrite H6, H7 in H3.
-    remember (snd st1 p) as s'.
-    destruct (s'); try tauto.
-    destruct s; try tauto.
-    destruct p0 as (q1, z1).
-    remember (snd st2 p) as s''.
-    destruct s''; try tauto.
-    destruct s; try tauto.
-    destruct p0 as (q2, z2).
-    destruct H3 as [? [? [? [? ?]]]].
-    ufstatej. ufStatej H2.
-    unfold SeparationAlgebra.join in H2.
-    destruct H2.
+        exact (H3 p' n). }
+    rename H7 into H77.
+    split; [exact H77 |].
+    ufstatej. ufStatej H2. destruct H2.
     split.
-    { subst st22. unfold fst at 2. rewrite <-H11. tauto. }
-    ufheapj. ufHeapj H12.
-    intros pp. specialize (H12 pp).
-    rewrite ufoptionj in *. destruct H12 as [? | [? | [? | ?]]].
-    + left. split; try tauto. destruct H12 as [? [? ?]].
-      subst st22. unfold heap_update.  unfold snd at 1.
+    { ufStorej H2. ufstorej.
+      subst. unfold fst at 3. rewrite <-H10. tauto. }
+    ufheapj. ufHeapj H7.
+    intros pp. specialize (H7 pp).
+    rewrite ufoptionj in *.
+    destruct H7 as [? | [? | [? | ?]]].
+    + left.
+      destruct H7 as [? [? ?]].
+      subst. unfold snd at 2, heap_update.
       destruct (Z.eq_dec pp p).
-      - subst pp. rewrite H14 in Heqs'. inversion Heqs'.
-      - specialize (H10 pp n). rewrite H10. tauto.
-    + right; left.  destruct H12 as [vv [? [? ?]]].
-      subst st22. unfold snd at 2. unfold heap_update.
+      - subst. rewrite H8 in H1; inversion H1.
+      - specialize (H9 pp n); rewrite H9; tauto.
+    + right; left.
+      destruct H7 as [vv [? [? ?]]].
+      subst. unfold snd at 2, heap_update.
       destruct (Z.eq_dec pp p).
-      - subst pp.
-        unfold fullper in H1. destruct H1.
-        destruct H1 as [v' ?].
-        rewrite H1. exists (inl (1%Q, v)).
-        split; try split; try tauto.
-        rewrite <-Heqs''. rewrite H9. 
-        rewrite H8. tauto.
-      - exists vv.
-        specialize (H10 pp n). rewrite H10. tauto.
-    + right; right; left. destruct H12 as [vv [? [? ?]]].
-      subst st22. unfold snd at 2. unfold heap_update.
+      - subst pp. rewrite H8.
+        rewrite H8 in H1; inversion H1. 
+        subst. rewrite <-Heqh2p.
+        exists (inl (1%Q, v)). tauto.
+      - specialize (H9 pp n); rewrite H9.
+        exists vv. tauto.
+    + right; right; left.
+      destruct H7 as [vv [? [? ?]]].
+      subst. unfold snd at 2, heap_update.
       destruct (Z.eq_dec pp p).
-      - subst pp.
-        unfold fullper in H1. destruct H1 as [[v' ?] ?].
-        rewrite H13 in H1. inversion H1.
-      - exists vv.
-        specialize (H10 pp n). rewrite H10. tauto.
-    + right; right; right. 
-      destruct H12 as [vv1 [vv2 [vv [? [? [? ?]]]]]].
-      subst st22. unfold heap_update.
-      unfold snd at 2. destruct (Z.eq_dec pp p).
-      - subst pp. rewrite H13.
-        unfold QZandLock_Join in *. rewrite ufsumj in H15.
-        destruct H15.
-        2:{ destruct H15 as [? [? [? [? [? [? ?]]]]]]. 
-            rewrite H17 in H14. rewrite H14 in Heqs'. inversion Heqs'. }
-        destruct H15 as [vl1 [vl2 [vl [? [? [? ?]]]]]].
-        subst vv1 vv2 vv. 
-        destruct vl1 as (qq1, qz1).
-        destruct vl2 as (qq2, qz2).
-        rewrite H14 in Heqs'. inversion Heqs'. subst vl.
-        subst. clear Heqs'.
-        exists (inl (qq1, z1)), (inl (qq2, z1)), (inl (1%Q, z1)).
-        unfold QZ_Join in H18. unfold OSAGenerators.prod_Join in H18.
-        unfold SeparationAlgebra.join in H18.
-        destruct H18. unfold Z_Join in H8. unfold OSAGenerators.equiv_Join in H8.
-        destruct H8. inversion H8. inversion H9. unfold snd in H15, H16. subst.
-        split.
-        { rewrite H12. tauto. }
-        split.
-        { rewrite H} 
-
-
-
-        repeat eexists. exact H12. rewrite Heqs''. tauto.
-        rewrite ufsumj. left.
-        eexists. eexists. eexists.
-        split; [tauto |]. split; [tauto |]. split; [tauto |].
-        unfold QZ_Join in *. unfold OSAGenerators.prod_Join in *.
-        unfold fst, snd in H18. unfold SeparationAlgebra.join in H18.
-        split. 2:{
-        unfold SeparationAlgebra.join, snd.
-        unfold Z_Join. unfold OSAGenerators.equiv_Join.
-        destruct H18. unfold Z_Join in H16. unfold OSAGenerators.equiv_Join in H16.
-        subst. split; try tauto.
-
-          
-
-
-    
+      - subst pp. rewrite H1 in H8. inversion H8.
+      - specialize (H9 pp n); rewrite H9.
+        exists vv. tauto.
+    + right; right; right.
+      destruct H7 as [vv1 [vv2 [vv [? [? [? ?]]]]]].
+      subst. unfold snd at 2, heap_update.
+      destruct (Z.eq_dec pp p).
+      - subst pp. rewrite H8.
+        destruct vv2.
+        2:{ unfold QZandLock_Join in H12. rewrite ufsumj in H12.
+          destruct H12; destruct H12 as [? [? [? [? [? [? ?]]]]]].
+          + inversion H13. + subst. rewrite H11 in Heqh1p; inversion Heqh1p. }
+        destruct p0 as (q12, z12). 
+        unfold QZandLock_Join in H12. rewrite ufsumj in H12.
+        destruct H12.
+        2:{ destruct H12 as [? [? [? [? [? [? ?]]]]]]. subst. inversion H13. }
+        destruct H12 as [vl1 [vl2 [vl [? [? [? ?]]]]]].
+        subst. destruct vl as (q1, z1). destruct vl1 as (q11, z11).
+        inversion H13; subst.
+        rename H11 into Hst1. rename H8 into Hst12. rename H7 into Hst11.
+        exists (inl (q11, z11)), (inl (q12, v)), (inl (1%Q, v)).
+        split; [tauto |]. split; [tauto |]. split; [rewrite Heqh2p; tauto |].
+        unfold QZandLock_Join. rewrite ufsumj. left.
+        exists (q11, z11), (q12, v), (1%Q, v).
+        unfold QZ_Join in H15.
+        unfold OSAGenerators.prod_Join in H15.
+        unfold SeparationAlgebra.join in H15. destruct H15.
+        unfold Q_Join in H7.
+        unfold fst in H7. destruct H7 as [? [? [? [? [? [? ?]]]]]].
+        assert (q1 == 1).
+        { rewrite Hst1 in Heqh1p. inversion Heqh1p. lra. }
+        assert (q12 == 1).
+        { rewrite Hst12 in H1. inversion H1. lra. }
+        lra.
+      - specialize (H9 pp n).
+        rewrite H9.
+        exists vv1, vv2, vv. tauto. }
+  simpl. unfold BinRel.empty. tauto.
+Qed. 
+        
 
 
 

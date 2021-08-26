@@ -26,7 +26,9 @@ Definition mapsto_ (p : addr) : Assertion := fun st => (exists q v, snd st p = S
 
 Definition mapsto (p : addr) (v : Z) : Assertion := fun st => (exists q, snd st p = Some (inl (q, v))) /\ (forall p', p' <> p -> snd st p' = None).
 
-Definition fullper (p : addr) : Assertion := fun st => (exists v, snd st p = Some (inl (1%Q, v))) /\ (forall p', p' <> p -> snd st p' = None).
+Definition fullper_ (p : addr) : Assertion := fun st => (exists v, snd st p = Some (inl (1%Q, v))) /\ (forall p', p' <> p -> snd st p' = None).
+
+Definition fullper (p : addr) (v : Z) : Assertion := fun st => snd st p = Some (inl (1%Q, v)) /\ (forall p', p' <> p -> snd st p' = None).
 
 Definition derives : Assertion -> Assertion -> Prop := fun P Q => forall st, P st -> Q st.
 
@@ -69,7 +71,7 @@ Import Assertion_Shallow.
 Ltac ufsepcon := unfold sepcon; unfold SepCon.
 Ltac ufSepcon H := unfold sepcon in H; unfold SepCon in H.
 Ltac ufstatej := unfold stateJ; unfold OSAGenerators.prod_Join; unfold SeparationAlgebra.join.
-Ltac ufStatej H := unfold stateJ in H; unfold OSAGenerators.prod_Join in H; unfold SeparationAlgebra.join.
+Ltac ufStatej H := unfold stateJ in H; unfold OSAGenerators.prod_Join in H; unfold SeparationAlgebra.join in H.
 Ltac ufstorej := unfold storeJ; unfold OSAGenerators.equiv_Join.
 Ltac ufStorej H := unfold storeJ in H; unfold OSAGenerators.equiv_Join in H.
 Ltac ufheapj := unfold heapJ; unfold OSAGenerators.fun_Join; unfold SeparationAlgebra.join; unfold OSAGenerators.option_Join.
