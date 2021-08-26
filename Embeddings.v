@@ -26,6 +26,8 @@ Definition mapsto_ (p : addr) : Assertion := fun st => (exists q v, snd st p = S
 
 Definition mapsto (p : addr) (v : Z) : Assertion := fun st => (exists q, snd st p = Some (inl (q, v))) /\ (forall p', p' <> p -> snd st p' = None).
 
+Definition fullper (p : addr) : Assertion := fun st => (exists v, snd st p = Some (inl (1%Q, v))) /\ (forall p', p' <> p -> snd st p' = None).
+
 Definition derives : Assertion -> Assertion -> Prop := fun P Q => forall st, P st -> Q st.
 
 Definition store_update (s : store) (X : var) (v : option Z) : store :=
@@ -36,6 +38,15 @@ Definition store_update (s : store) (X : var) (v : option Z) : store :=
 
 Definition subst (P : Assertion) (X : var) (v : Z) : Assertion :=
   fun st => P (store_update (fst st) X (Some v), snd st).
+
+Definition heap_update (h : heap) (p : addr) (v : option Z) : heap :=
+  match v with
+  | Some n => fun p' => if (Z.eq_dec p' p) then match h p' with
+    | Some (inl (q, z)) => Some (inl (q, n))
+    | _ => None
+  end else h p' 
+  | _ => fun p' => None 
+  end.  
 
 End Assertion_Shallow.
 
@@ -125,29 +136,17 @@ Proof.
       rewrite H, H0, H1. constructor; tauto.
 Qed.
 
-Goal forall P R st (st1 st2 : state), sepcon P R st.
+Goal forall x1 x2 x, QZandLock_Join x1 x2 x.
 Proof.
+  unfold QZandLock_Join.
   intros.
-  ufsepcon.
-  exists st1, st2.
-  split; try split. admit. admit.
-  ufstatej.
-  split.
-  + ufstorej. admit.
-  + (*unfold heapJ.
-    unfold OSAGenerators.fun_Join.
-    unfold SeparationAlgebra.join.
-    unfold OSAGenerators.option_Join. *)
-    ufheapj.
-    intros.
-    (* pose proof (@ufoptionj _  (snd st1 x) (snd st2 x) (snd st x) QZandLock_Join).
-    rewrite H. clear H. right. right. right.
-    repeat (exists (inl (1%Q, 1))).
-    split; try split; try split.
-    admit. admit. admit.
-    unfold QZandLock_Join.
-    unfold OSAGenerators.sum_Join.
-    remember (inl (1%Q, 1)) as y. *)
+  rewrite ufsumj.
+  left. exists (0.5%Q, 1), (0.5%Q, 1), (1%Q, 1).
+  split; try split; try split. admit. admit. admit.
+  unfold QZ_Join.
+  unfold OSAGenerators.prod_Join.
+  unfold SeparationAlgebra.join.
+  unfold Q_Join, Z_Join.
 
 
 

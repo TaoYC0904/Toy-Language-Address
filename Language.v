@@ -235,7 +235,7 @@ Definition set_sem (X : var) (DA : state -> option Z): com_denote := {|
 Definition store_sem (DAL DAR : state -> option Z) : com_denote := {|
   com_normal := fun st1 st2 => match (DAL st1), (DAR st1) with
     | Some p, Some v => match (snd st1 p), (snd st2 p) with
-      | Some (inl (q1, z1)), Some (inl (q2, z2)) => Qeq q1 1%Q /\ Qeq q2 1%Q /\ z2 = v /\
+      | Some (inl (q1, z1)), Some (inl (q2, z2)) => q1 = 1%Q /\ q2 = 1%Q /\ z2 = v /\
           (forall p', p' <> p -> snd st2 p' = snd st1 p') /\ fst st1 = fst st2
       | _, _ => False
     end
