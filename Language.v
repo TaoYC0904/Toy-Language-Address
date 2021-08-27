@@ -326,6 +326,9 @@ Definition mapsto__sem (st : state) (p : addr) (pi : Q) :=
 Definition hasLock_sem (st : state) (l : addr) (pi : Q) (P : Assertion_D) :=
   snd st l = Some (inr (pi, None, P)) /\ (forall p', p' <> l -> snd st p' = None).
 
+Definition readytoRelease_sem (st : state) (l : addr) (pi : Q) (P : Assertion_D) :=
+  snd st l = Some (inr (pi, Some tt, P)) /\ (forall p', p' <> l -> snd st p' = None).
+
 Definition emp_sem (st : state) := forall p, snd st p = None.
 
 Definition heap_Update (h : heap) (p : addr) v : heap := 
@@ -341,16 +344,16 @@ Definition make_sem (l : addr) (P Q : Assertion_D) : com_denote := {|
   com_error := fun st => ~ (exists st11 st12, stateJ st11 st12 st /\ Assertion_Denote P st11) \/
     snd st l = None |}.
     
-Definition finalize_sem (l : addr) : com_denote := {|
+Definition deallocate_sem (l : addr) : com_denote := {|
   com_normal := fun st1 st2 => match snd st1 l with
-    | Some (inr (1%Q, Some tt, P)) => exists st21 st22,
+    | Some (inr (1%Q, None, P)) => exists st21 st22,
         stateJ st21 st22 st2 /\ Assertion_Denote P st21 /\ st22 = (fst st1, heap_Update (snd st1) l (Some (inl (1%Q, 0))))
     | _ => False 
   end;
   com_break := BinRel.empty;
   com_cont := BinRel.empty;
   com_error := fun st => match snd st l with
-    | Some (inr (1%Q, Some tt, P)) => False 
+    | Some (inr (1%Q, None, P)) => False 
     | _ => True 
   end |}. 
 
@@ -368,17 +371,15 @@ Definition acquire_sem (l : addr) : com_denote := {|
   end |}.
 
 Definition release_sem (l : addr) (Q : Assertion_D) : com_denote := {|
-  com_normal := fun st1 st2 => match snd st1 l with
-    | Some (inr (q, Some tt, P)) => exists st11 st12, 
-        stateJ st11 st12 st1 /\ Assertion_Denote P st11 /\ Assertion_Denote (DSepcon Q (DProp True)) st12 /\
-        st2 = (fst st12, heap_Update (snd st12) l (Some (inr (q, None, P))))
-    | _ => False 
-  end;
+  com_normal := fun st1 st2 => exists st11 st12 st121 st122 st21 st22 P pi,
+    stateJ st11 st12 st1 /\ stateJ st121 st122 st12 /\ stateJ st21 st22 st2 /\
+    Assertion_Denote P st11 /\ Assertion_Denote Q st121 /\ readytoRelease_sem st122 l pi P /\
+    Assertion_Denote Q st21 /\ hasLock_sem st22 l pi P;
   com_break := BinRel.empty;
   com_cont := BinRel.empty;
   com_error := fun st => match snd st l with
-    | Some (inr (q, Some tt, P)) => False 
-    | _ => True 
+    | Some (inr (q, Some tt, P)) => ~(exists st1 st2, stateJ st1 st2 st /\ Assertion_Denote P st1)
+    | _ => True
   end |}.
 
 (* Definition acquire_sem (p : addr) : com_denote := {|
@@ -422,7 +423,7 @@ Fixpoint ceval (c : com) : com_denote :=
   | CMake l P Q => make_sem l P Q 
   | CAcquire p => acquire_sem p 
   | CRelease p Q => release_sem p Q
-  | CFinalize p => finalize_sem p
+  | CDeallocate p => deallocate_sem p
   end.
 
 End Denote_Com.

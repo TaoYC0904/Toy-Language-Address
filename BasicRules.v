@@ -241,7 +241,7 @@ Qed.
 
 Theorem store_rule_sound : forall P e1 e2 p v,
   derives P (andp (eqp e1 p) (eqp e2 v)) ->
-  valid (sepcon P (fullper_ p)) (CStore e1 e2) (sepcon P (fullper p v)) falsep falsep.
+  valid (sepcon P (mapsto_ p 1%Q)) (CStore e1 e2) (sepcon P (mapsto p 1%Q v)) falsep falsep.
 Proof.
   unfold derives, valid. intros.
   unfold andp in H.
@@ -258,7 +258,7 @@ Proof.
     assert (exists x, snd st1 p = Some x).
     { ufStatej H2. destruct H2.
       ufHeapj H8. specialize (H8 p). rewrite ufoptionj in H8.
-      unfold fullper in H1. destruct H1.
+      unfold mapsto_ in H1. destruct H1.
       destruct H1 as [z ?].
       destruct H8 as [? | [? | [? | ?]]].
       + destruct H8 as [? [? ?]]. rewrite H10 in H1. inversion H1.
@@ -268,7 +268,7 @@ Proof.
         exists x; tauto. }
     destruct H8 as [x ?].
     rewrite H8 in H3.
-    unfold fullper_ in H1. destruct H1 as [[z ?] ?].
+    unfold mapsto_ in H1. destruct H1 as [[z ?] ?].
     assert (snd st1 p = Some (inl (1%Q, z))).
     { ufStatej H2. destruct H2.
       ufHeapj H10. specialize (H10 p). rewrite ufoptionj in H10.
@@ -316,13 +316,13 @@ Proof.
     destruct s; [| inversion H3].
     rename p0 into h2p. destruct h2p as (h2pq, h2pz).
     destruct H3 as [? [? [? [? ?]]]]. subst.
-    unfold fullper_ in H1. destruct H1 as [[h1pz' ?] ?].
+    unfold mapsto_ in H1. destruct H1 as [[h1pz' ?] ?].
     remember (heap_update (snd st12) p (Some v)) as h22.
     remember (fst st12, h22) as st22.
     exists st11, st22.
     split; [tauto |].
-    assert (fullper p v st22).
-    { unfold fullper. split.
+    assert (mapsto p 1%Q v st22).
+    { unfold mapsto. split.
       + subst st22 h22. unfold snd at 1, heap_update.
         destruct (Z.eq_dec p p); try tauto.
         rewrite H1. tauto.
@@ -402,27 +402,244 @@ Qed.
 
 Definition emptyheap : heap := fun _ => None.
 
-Theorem make_rule_sound : forall l P P',
-  P' = DeepintoShallow P ->
-  valid P' (CMake l P) (hasLock l 1%Q P) falsep falsep.
+Theorem make_rule_sound : forall l P P' Q Q',
+  P = DeepintoShallow P' ->
+  Q = DeepintoShallow Q' ->  
+  valid (sepcon P (sepcon Q (mapsto_ l 1%Q))) (CMake l P' Q') (sepcon Q (hasLock l 1%Q P')) falsep falsep.
 Proof.
   unfold valid; intros.
   split.
-  { simpl. unfold not. intros. apply H1. clear H1.
-    remember (fst st1, emptyheap) as st0.
-    exists st1, st0.
-    split. 2:{ subst P'. unfold DeepintoShallow in H0. tauto. }
-    ufstatej.
-    split. { ufstorej. subst st0. unfold fst at 3. tauto. }
-    ufheapj. intros p.
-    subst st0. unfold snd at 2. unfold emptyheap.
-    destruct (snd st1 p); constructor. }
+  { (* safety *)
+    unfold not; intros.
+    simpl in H2. unfold not in H2. destruct H2.
+    + (* no mem satisfying P *)  
+      apply H2. clear H2.
+      ufSepcon H1.
+      destruct H1 as [st11 [st12 [? [? ?]]]].
+      exists st11, st12. split; [tauto |].
+      subst P. unfold DeepintoShallow in H1. tauto.
+      + (* no permission to l *)
+      ufSepcon H1.
+      destruct H1 as [st11 [st12 [? [? ?]]]].
+      destruct H3 as [st121 [st122 [? [? ?]]]].
+      unfold mapsto_ in H5. destruct H5 as [[v ?] ?].
+      (* st12 has permission to l *)
+      assert (snd st12 l <> None).
+      { ufStatej H6. destruct H6. ufHeapj H8.
+        specialize (H8 l). rewrite ufoptionj in H8.
+        destruct H8 as [? | [? | [? | ?]]].
+        + destruct H8 as [? [? ?]]. rewrite H9 in H5. inversion H5.
+        + unfold not; intros.
+          destruct H8 as [v' [? [? ?]]]. rewrite H11 in H9. inversion H9.
+        + unfold not; intros.
+          destruct H8 as [v' [? [? ?]]]. rewrite H11 in H9. inversion H9.
+        + unfold not; intros.
+          destruct H8 as [v1 [v2 [v' [? [? [? ?]]]]]].
+          rewrite H11 in H9; inversion H9. }     
+      (* st 1 has permission to l *)
+      ufStatej H4. destruct H4. ufHeapj H9.
+      specialize (H9 l). rewrite ufoptionj in H9.
+      destruct H9 as [? | [? | [? | ?]]].
+      - destruct H9 as [? [? ?]]. rewrite H10 in H8. tauto.
+      - destruct H9 as [v' [? [? ?]]]. rewrite H11 in H2; inversion H2.
+      - destruct H9 as [v' [? [? ?]]]. rewrite H11 in H2; inversion H2.
+      - destruct H9 as [v1 [v2 [v' [? [? [? ?]]]]]].
+        rewrite H11 in H2. inversion H2. }
   split.
-  { intros. simpl in H1.
-    
+  { (* normal exit *)
+    intros.
+    simpl in H2.
+    destruct H2 as [st11 [st12 [st121 [st122 [st21 [st22 [? [? [? [? [? [? [? ?]]]]]]]]]]]]].
+    ufsepcon. exists st21, st22. 
+    split. { subst Q. unfold DeepintoShallow. tauto. }
+    split. { unfold hasLock_sem. unfold hasLock_sem in H9. unfold hasLock. tauto.  }
+    tauto. }
+  simpl. tauto.
+Qed.
+  
+Theorem deallocate_rule_sound : forall l P P',
+  P = DeepintoShallow P' ->
+  valid (hasLock l 1%Q P') (CDeallocate l) (sepcon P (mapsto_ l 1%Q))falsep falsep.
+Proof.
+  unfold valid; intros.
+  split.
+  { (* safety *)
+    unfold not; intros. 
+    unfold hasLock in H0. destruct H0.
+    simpl in H1. rewrite H0 in H1. tauto. }
+  split.
+  { (* normal exit *)
+    intros. 
+    unfold hasLock in H0. destruct H0.
+    simpl in H1. rewrite H0 in H1.
+    destruct H1 as [st21 [st22 [? [? ?]]]].
+    ufsepcon. exists st21, st22.
+    split. { subst P. unfold DeepintoShallow. tauto. }
+    split. 
+    { rewrite H4. unfold mapsto_, heap_Update. split.
+      + unfold snd at 1. destruct (Z.eq_dec l l); try tauto.
+        exists 0. reflexivity.
+      + intros pp ?.
+        unfold snd at 1. destruct (Z.eq_dec pp l); try tauto.
+        exact (H2 pp n). }
+    tauto. }
+  tauto.
+Qed.
+
+Theorem acquire_rule_sound : forall l P P' pi,
+  P = DeepintoShallow P' ->
+  valid (hasLock l pi P') (CAcquire l) (sepcon P (readytoRelease l pi P')) falsep falsep.
+Proof.
+  unfold valid; intros.
+  split.
+  { unfold not; intros.
+    unfold hasLock in H0. destruct H0.
+    simpl in H1. rewrite H0 in H1. tauto. }
+  split.
+  { intros. 
+    unfold hasLock in H0. destruct H0.
+    simpl in H1. rewrite H0 in H1.
+    destruct H1 as [st21 [st22 [? [? ?]]]].
+    ufsepcon. exists st21, st22.
+    split. { subst P. unfold DeepintoShallow; tauto. }
+    split; [| tauto].
+    unfold readytoRelease; split.
+    + rewrite H4. unfold snd at 1.
+      unfold heap_Update. destruct (Z.eq_dec l l); try tauto. 
+    + intros pp ?.
+      rewrite H4; unfold snd at 1; unfold heap_Update.
+      destruct (Z.eq_dec pp l); try tauto.
+      exact (H2 pp n). }
+  tauto.
+Qed.
+
+Theorem release_rule_sound : forall l P P' Q Q' pi,
+  P = DeepintoShallow P' ->
+  Q = DeepintoShallow Q' ->
+  valid (sepcon P (sepcon Q (readytoRelease l pi P'))) (CRelease l Q') (sepcon Q (hasLock l pi P')) falsep falsep.
+Proof.
+  unfold valid; intros.
+  split.
+  { unfold not; intros.
+    ufSepcon H1.
+    destruct H1 as [st11 [st12 [? [? ?]]]].
+    destruct H3 as [st121 [st122 [? [? ?]]]].
+    unfold readytoRelease in H5. destruct H5.
+    assert (exists pi', snd st12 l = Some (inr (pi', Some tt, P'))).
+    { ufStatej H6. destruct H6. ufHeapj H8. 
+      specialize (H8 l). rewrite ufoptionj in H8.
+      destruct H8 as [? | [? | [? | ?]]].
+      + destruct H8 as [? [? ?]]. rewrite H9 in H5. inversion H5.
+      + destruct H8 as [vv [? [? ?]]].
+        rewrite H9 in H5; inversion H5.
+        rewrite H12 in H10. exists pi. tauto.
+      + destruct H8 as [vv [? [? ?]]].
+        rewrite H9 in H5; inversion H5.
+      + destruct H8 as [v1 [v2 [v' [? [? [? ?]]]]]].
+        rewrite H9 in H5. inversion H5. subst v2.
+        unfold QZandLock_Join in H11. rewrite ufsumj in H11.
+        destruct H11. 
+        { destruct H11 as [? [? [? [? [? [? ?]]]]]]. inversion H12. }
+        destruct H11 as [vl1 [vl2 [vl [? [? [? ?]]]]]].
+        inversion H12. 
+        destruct vl1 as ((pi1, x1), P1).
+        destruct vl as ((pi12, x'), PP).
+        unfold lock_Join in H14.
+        unfold OSAGenerators.prod_Join in H14.
+        destruct H14.
+        unfold SeparationAlgebra.join in H14, H15.
+        subst vl2.
+        unfold lock1_Join in H14.
+        unfold OSAGenerators.prod_Join in H14.
+        destruct H14.
+        unfold SeparationAlgebra.join in H14, H16.
+        unfold Q_Join in H14.
+        unfold optionunit_Join, fst, snd in H16. 
+        unfold lock2_Join, snd in H15.
+        unfold OSAGenerators.equiv_Join in H15. 
+        destruct H15. rewrite <-H17 in H15.
+        subst P1 PP.
+        assert (x' = Some tt).
+        { rewrite ufoptionj in H16.
+          destruct H16 as [? | [? | [? | ?]]].
+        + destruct H15 as [? [? ?]]. inversion H16.
+        + destruct H15 as [? [? [? ?]]].
+          inversion H16. subst x. tauto.
+        + destruct H15 as [? [? [? ?]]]. inversion H16.
+        + destruct H15 as [? [? [? [? [? [? ?]]]]]].
+          unfold OSAGenerators.trivial_Join in H18. contradiction. }
+        subst x'.
+        unfold fst in H14.
+        exists pi12. rewrite H10. rewrite H13. tauto. }
+    destruct H8 as [pi' ?].
+    assert (exists pi'', snd st1 l = Some (inr (pi'', Some tt, P'))).
+    { ufStatej H4. destruct H4. ufHeapj H9.
+      specialize (H9 l). rewrite ufoptionj in H9.
+      destruct H9 as [? | [? | [? | ?]]].
+      + destruct H9 as [? [? ?]].
+        rewrite H10 in H8. inversion H8.
+      + destruct H9 as [vv [? [? ?]]].
+        rewrite H10 in H8. inversion H8. rewrite H13 in H11.
+        eexists. exact H11.
+      + destruct H9 as [vv [? [? ?]]].
+        rewrite H10 in H8. inversion H8.
+      + destruct H9 as [v1 [v2 [v' [? [? [? ?]]]]]].
+        rewrite H10 in H8. inversion H8. subst v2.
+        unfold QZandLock_Join in H12.
+        rewrite ufsumj in H12. destruct H12.
+        { destruct H12 as [? [? [? [? [? [? ?]]]]]].
+          inversion H13. }
+        destruct H12 as [vr1 [vr2 [vr [? [? [? ?]]]]]].
+        subst v'. inversion H13; subst vr2.
+        destruct vr1 as ((pi1, x), P1).
+        destruct vr as ((pi12, xx), PP).
+        unfold lock_Join in H15.
+        unfold OSAGenerators.prod_Join in H15.
+        unfold SeparationAlgebra.join in H15.
+        destruct H15.
+        unfold lock1_Join in H14.
+        unfold OSAGenerators.prod_Join in H14.
+        unfold SeparationAlgebra.join in H14.
+        destruct H14.
+        unfold lock2_Join in H15.
+        unfold OSAGenerators.equiv_Join, snd in H15.
+        destruct H15. rewrite <-H17 in H15. subst P1 PP.
+        unfold optionunit_Join in H16.
+        assert (xx = Some tt).
+        { unfold snd, fst in H16.
+          rewrite ufoptionj in H16.
+          destruct H16 as [? | [? | [? | ?]]].
+          + destruct H15 as [? [? ?]]. inversion H16.
+          + destruct H15 as [v [? [? ?]]].
+            inversion H16. subst v. tauto.
+          + destruct H15 as [? [? [? ?]]]. inversion H16.
+          + destruct H15 as [? [? [? [? [? [? ?]]]]]].
+            unfold OSAGenerators.trivial_Join in H18. contradiction. }
+        subst xx.
+        exists pi12. tauto. }
+    destruct H9 as [pi'' ?].
+    simpl in H2. rewrite H9 in H2.
+    unfold not in H2; apply H2.
+    exists st11, st12; split; try tauto.
+    subst. unfold DeepintoShallow in *. tauto. }
+  split.
+  { intros.
+    simpl in H2.
+    destruct H2 as [st11 [st12 [st121 [st122 [st21 [st22 [PP [pi' [? [? [? [? [? [? [? ?]]]]]]]]]]]]]]].
+    ufsepcon.
+    exists st21, st22.
+    split. { subst; unfold DeepintoShallow; tauto. }
+    split; [| tauto].
+    unfold hasLock.
+    unfold hasLock_sem in H9.
+    split; try tauto.
      
     
-  
-  
-  
+          
+          
+
+
+
+
+
 

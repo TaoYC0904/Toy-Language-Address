@@ -50,8 +50,7 @@ Definition hasLock (L : addr) (pi : Q) (R : Assertion_D) : Assertion :=
   fun st => snd st L = Some (inr (pi, None, R)) /\ (forall p, p <> L -> snd st p = None).
 
 Definition readytoRelease (L : addr) (pi : Q) (R : Assertion_D) : Assertion :=
-  fun st => exists st1 st2, stateJ st1 st2 st /\ Assertion_Denote R st1 /\ snd st2 L = Some (inr (pi, Some tt, R)) /\
-    (forall p, p <> L -> snd st2 p = None).
+  fun st => snd st L = Some (inr (pi, Some tt, R)) /\ (forall p, p <> L -> snd st p = None).
 
 End Assertion_Shallow.
 

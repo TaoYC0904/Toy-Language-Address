@@ -62,7 +62,7 @@ Inductive com : Type :=
   | CMake (l : addr) (P : Assertion_D) (Q : Assertion_D)
   | CAcquire (l : addr)
   | CRelease (l : addr) (Q : Assertion_D)
-  | CFinalize (l : addr) .
+  | CDeallocate (l : addr) .
 
 Definition heap : Type := addr -> (option ((Q * Z) + (Q * (option unit) * Assertion_D))).
 Definition state : Type := store * heap.
