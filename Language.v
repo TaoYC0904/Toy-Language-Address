@@ -320,22 +320,31 @@ Definition delete_sem (X : var) : com_denote := {|
 Definition mapsto_sem (st : state) (p : addr) (v : Z) (pi : Q) :=
   snd st p = Some (inl (pi, v)) /\ (forall p', p' <> p -> snd st p = None).
 
+Definition mapsto__sem (st : state) (p : addr) (pi : Q) :=
+  exists v, snd st p = Some (inl (pi, v)) /\ (forall p', p' <> p -> snd st p = None).
+
+Definition hasLock_sem (st : state) (l : addr) (pi : Q) (P : Assertion_D) :=
+  snd st l = Some (inr (pi, None, P)) /\ (forall p', p' <> l -> snd st p' = None).
+
 Definition emp_sem (st : state) := forall p, snd st p = None.
 
-Definition heap_update (h : heap) (p : addr) v : heap := 
+Definition heap_Update (h : heap) (p : addr) v : heap := 
   fun p' => if (Z.eq_dec p' p) then v else h p'.
 
-Definition make_sem (l : addr) (P : Assertion_D) : com_denote := {|
-  com_normal := fun st1 st2 => exists st11 st12, 
-    stateJ st11 st12 st1 /\ Assertion_Denote P st11 /\ st2 = (fst st12, heap_update (snd st12) l (Some (inr (1%Q, None, P))));
+Definition make_sem (l : addr) (P Q : Assertion_D) : com_denote := {|
+  com_normal := fun st1 st2 => exists st11 st12 st121 st122 st21 st22,
+    stateJ st11 st12 st1 /\ stateJ st121 st122 st12 /\ stateJ st21 st22 st2 /\
+    Assertion_Denote P st11 /\ Assertion_Denote Q st121 /\ mapsto__sem st122 l 1%Q /\
+    Assertion_Denote Q st21 /\ hasLock_sem st22 l 1%Q P;
   com_break := BinRel.empty;
   com_cont := BinRel.empty;
-  com_error := fun st => ~ (exists st11 st12, stateJ st11 st12 st /\ Assertion_Denote P st11) |}.
-
+  com_error := fun st => ~ (exists st11 st12, stateJ st11 st12 st /\ Assertion_Denote P st11) \/
+    snd st l = None |}.
+    
 Definition finalize_sem (l : addr) : com_denote := {|
   com_normal := fun st1 st2 => match snd st1 l with
     | Some (inr (1%Q, Some tt, P)) => exists st21 st22,
-        stateJ st21 st22 st2 /\ Assertion_Denote P st21 /\ st22 = (fst st1, heap_update (snd st1) l None)
+        stateJ st21 st22 st2 /\ Assertion_Denote P st21 /\ st22 = (fst st1, heap_Update (snd st1) l (Some (inl (1%Q, 0))))
     | _ => False 
   end;
   com_break := BinRel.empty;
@@ -343,12 +352,12 @@ Definition finalize_sem (l : addr) : com_denote := {|
   com_error := fun st => match snd st l with
     | Some (inr (1%Q, Some tt, P)) => False 
     | _ => True 
-  end |}.
+  end |}. 
 
 Definition acquire_sem (l : addr) : com_denote := {|
   com_normal := fun st1 st2 => match snd st1 l with
     | Some (inr (q, none, P)) => exists st21 st22,
-        stateJ st21 st22 st2 /\ Assertion_Denote P st21 /\ st22 = (fst st1, heap_update (snd st1) l (Some (inr (q, Some tt, P))))
+        stateJ st21 st22 st2 /\ Assertion_Denote P st21 /\ st22 = (fst st1, heap_Update (snd st1) l (Some (inr (q, Some tt, P))))
     | _ => False 
   end;
   com_break := BinRel.empty;
@@ -362,7 +371,7 @@ Definition release_sem (l : addr) (Q : Assertion_D) : com_denote := {|
   com_normal := fun st1 st2 => match snd st1 l with
     | Some (inr (q, Some tt, P)) => exists st11 st12, 
         stateJ st11 st12 st1 /\ Assertion_Denote P st11 /\ Assertion_Denote (DSepcon Q (DProp True)) st12 /\
-        st2 = (fst st12, heap_update (snd st12) l (Some (inr (q, None, P))))
+        st2 = (fst st12, heap_Update (snd st12) l (Some (inr (q, None, P))))
     | _ => False 
   end;
   com_break := BinRel.empty;
@@ -410,7 +419,7 @@ Fixpoint ceval (c : com) : com_denote :=
   | CFor c1 c2 => for_sem (ceval c1) (ceval c2)
   | CNew X => new_sem X 
   | CDelete X => delete_sem X
-  | CMake p Q => make_sem p Q 
+  | CMake l P Q => make_sem l P Q 
   | CAcquire p => acquire_sem p 
   | CRelease p Q => release_sem p Q
   | CFinalize p => finalize_sem p

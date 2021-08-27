@@ -10,7 +10,7 @@ Require Import Lqa.
 Open Scope Z.
 Import T.
 Import Denote_Aexp Denote_Bexp Denote_Term Denote_Assertion_D Denote_Com.
-Import Assertion_Shallow Validity tactics.
+Import Assertion_Shallow Validity tactics Deep_Shallow.
 
 Module BasicRulesSound.
 
@@ -400,5 +400,29 @@ Proof.
   simpl. unfold BinRel.empty. tauto.
 Qed.
 
+Definition emptyheap : heap := fun _ => None.
 
+Theorem make_rule_sound : forall l P P',
+  P' = DeepintoShallow P ->
+  valid P' (CMake l P) (hasLock l 1%Q P) falsep falsep.
+Proof.
+  unfold valid; intros.
+  split.
+  { simpl. unfold not. intros. apply H1. clear H1.
+    remember (fst st1, emptyheap) as st0.
+    exists st1, st0.
+    split. 2:{ subst P'. unfold DeepintoShallow in H0. tauto. }
+    ufstatej.
+    split. { ufstorej. subst st0. unfold fst at 3. tauto. }
+    ufheapj. intros p.
+    subst st0. unfold snd at 2. unfold emptyheap.
+    destruct (snd st1 p); constructor. }
+  split.
+  { intros. simpl in H1.
+    
+     
+    
+  
+  
+  
 

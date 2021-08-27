@@ -22,13 +22,9 @@ Definition safea (a : aexp) : Assertion := fun st => ~ (aeval a) st = None.
 
 Definition safeb (b : bexp) : Assertion := fun st => ~ error_set (beval b) st.
 
-Definition mapsto_ (p : addr) : Assertion := fun st => (exists q v, snd st p = Some (inl (q, v))) /\ (forall p', p' <> p -> snd st p' = None).
+Definition mapsto_ (p : addr) (pi : Q) : Assertion := fun st => (exists v, snd st p = Some (inl (pi, v))) /\ (forall p', p' <> p -> snd st p' = None).
 
-Definition mapsto (p : addr) (v : Z) : Assertion := fun st => (exists q, snd st p = Some (inl (q, v))) /\ (forall p', p' <> p -> snd st p' = None).
-
-Definition fullper_ (p : addr) : Assertion := fun st => (exists v, snd st p = Some (inl (1%Q, v))) /\ (forall p', p' <> p -> snd st p' = None).
-
-Definition fullper (p : addr) (v : Z) : Assertion := fun st => snd st p = Some (inl (1%Q, v)) /\ (forall p', p' <> p -> snd st p' = None).
+Definition mapsto (p : addr) (pi : Q) (v : Z) : Assertion := fun st => snd st p = Some (inl (pi, v)) /\ (forall p', p' <> p -> snd st p' = None).
 
 Definition derives : Assertion -> Assertion -> Prop := fun P Q => forall st, P st -> Q st.
 
@@ -51,10 +47,11 @@ Definition heap_update (h : heap) (p : addr) (v : option Z) : heap :=
   end. 
   
 Definition hasLock (L : addr) (pi : Q) (R : Assertion_D) : Assertion :=
-  fun st => snd st L = Some (inr (pi, None, R)).
+  fun st => snd st L = Some (inr (pi, None, R)) /\ (forall p, p <> L -> snd st p = None).
 
 Definition readytoRelease (L : addr) (pi : Q) (R : Assertion_D) : Assertion :=
-  fun st => snd st L = Some (inr (pi, Some tt, R)).
+  fun st => exists st1 st2, stateJ st1 st2 st /\ Assertion_Denote R st1 /\ snd st2 L = Some (inr (pi, Some tt, R)) /\
+    (forall p, p <> L -> snd st2 p = None).
 
 End Assertion_Shallow.
 
@@ -70,6 +67,13 @@ Definition valid (P : Assertion) (c : com) (Q Rb Rc : Assertion) : Prop :=
     (com_cont (ceval c) st1 st2 -> Rc st2).
 
 End Validity.
+
+Module Deep_Shallow.
+
+Definition DeepintoShallow (P : Assertion_D) : Assertion :=
+  fun st => Assertion_Denote P st.
+
+End Deep_Shallow.
 
 Module tactics.
 Import Assertion_Shallow.
