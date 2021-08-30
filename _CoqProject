@@ -1,5 +1,9 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 -Q . Toy -Q ./lib Toy.lib -Q ./unifysl-interface Toy.UnifySL -R ../qinxiang-unifysl Logic
 =======
 -Q . FP -Q ./unifysl-interface FP.UnifySL -R ../qinxiang-unifysl Logic
 >>>>>>> f2/main
+=======
+-Q . Toy -Q ./unifysl-interface Toy.UnifySL -R ../qinxiang-unifysl Logic
+>>>>>>> f3/main
