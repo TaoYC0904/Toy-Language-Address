@@ -418,7 +418,7 @@ Proof.
       destruct H1 as [st11 [st12 [? [? ?]]]].
       exists st11, st12. split; [tauto |].
       subst P. unfold DeepintoShallow in H1. tauto.
-      + (* no permission to l *)
+    + (* no permission to l *)
       ufSepcon H1.
       destruct H1 as [st11 [st12 [? [? ?]]]].
       destruct H3 as [st121 [st122 [? [? ?]]]].
@@ -514,6 +514,17 @@ Proof.
 Qed.
 
 Theorem release_rule_sound : forall l P P' Q Q' pi,
+  P = DeepintoShallow P' ->
+  Q = DeepintoShallow Q' ->
+  valid (sepcon P (sepcon Q (readytoRelease l pi P'))) (CRelease l Q' pi) (sepcon Q (hasLock l pi P')) falsep falsep.
+Proof.
+  unfold valid; intros.
+  split.
+  { unfold not; intros.
+    simpl in H2.
+
+
+(* Theorem release_rule_sound : forall l P P' Q Q' pi,
   P = DeepintoShallow P' ->
   Q = DeepintoShallow Q' ->
   valid (sepcon P (sepcon Q (readytoRelease l pi P'))) (CRelease l Q') (sepcon Q (hasLock l pi P')) falsep falsep.
@@ -633,7 +644,7 @@ Proof.
     unfold hasLock.
     unfold hasLock_sem in H9.
     split; try tauto.
-     
+     *)
     
           
           

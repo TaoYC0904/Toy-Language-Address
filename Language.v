@@ -370,16 +370,16 @@ Definition acquire_sem (l : addr) : com_denote := {|
     | _ => True 
   end |}.
 
-Definition release_sem (l : addr) (Q : Assertion_D) : com_denote := {|
-  com_normal := fun st1 st2 => exists st11 st12 st121 st122 st21 st22 P pi,
+Definition release_sem (l : addr) (Q' : Assertion_D) (pi : Q) : com_denote := {|
+  com_normal := fun st1 st2 => exists st11 st12 st121 st122 st21 st22 P,
     stateJ st11 st12 st1 /\ stateJ st121 st122 st12 /\ stateJ st21 st22 st2 /\
-    Assertion_Denote P st11 /\ Assertion_Denote Q st121 /\ readytoRelease_sem st122 l pi P /\
-    Assertion_Denote Q st21 /\ hasLock_sem st22 l pi P;
+    Assertion_Denote P st11 /\ Assertion_Denote Q' st121 /\ readytoRelease_sem st122 l pi P /\
+    Assertion_Denote Q' st21 /\ hasLock_sem st22 l pi P;
   com_break := BinRel.empty;
   com_cont := BinRel.empty;
   com_error := fun st => match snd st l with
-    | Some (inr (q, Some tt, P)) => ~(exists st1 st2, stateJ st1 st2 st /\ Assertion_Denote P st1)
-    | _ => True
+    | Some (inr (pi, Some tt, P)) => ~(exists st1 st2, stateJ st1 st2 st /\ Assertion_Denote P st1)
+    | _ => True 
   end |}.
 
 (* Definition acquire_sem (p : addr) : com_denote := {|
@@ -422,7 +422,7 @@ Fixpoint ceval (c : com) : com_denote :=
   | CDelete X => delete_sem X
   | CMake l P Q => make_sem l P Q 
   | CAcquire p => acquire_sem p 
-  | CRelease p Q => release_sem p Q
+  | CRelease p Q pi => release_sem p Q pi
   | CDeallocate p => deallocate_sem p
   end.
 

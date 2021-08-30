@@ -61,7 +61,7 @@ Inductive com : Type :=
   | CDelete (X : var)
   | CMake (l : addr) (P : Assertion_D) (Q : Assertion_D)
   | CAcquire (l : addr)
-  | CRelease (l : addr) (Q : Assertion_D)
+  | CRelease (l : addr) (Q' : Assertion_D) (pi : Q)
   | CDeallocate (l : addr) .
 
 Definition heap : Type := addr -> (option ((Q * Z) + (Q * (option unit) * Assertion_D))).
