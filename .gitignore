@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 .*.aux
+=======
+*CoqMakefile*
+
+.*.aux
+.*.d
+>>>>>>> f2/main
 *.a
 *.cma
 *.cmi
@@ -9,6 +16,10 @@
 *.glob
 *.ml.d
 *.ml4.d
+<<<<<<< HEAD
+=======
+*.mlg.d
+>>>>>>> f2/main
 *.mli.d
 *.mllib.d
 *.mlpack.d
@@ -19,7 +30,11 @@
 *.vo
 *.vok
 *.vos
+<<<<<<< HEAD
 .coq-native/
+=======
+.coq-native
+>>>>>>> f2/main
 .csdp.cache
 .lia.cache
 .nia.cache
@@ -30,3 +45,17 @@ lia.cache
 nia.cache
 nlia.cache
 nra.cache
+<<<<<<< HEAD
+=======
+native_compute_profile_*.data
+
+# generated timing files
+*.timing.diff
+*.v.after-timing
+*.v.before-timing
+*.v.timing
+time-of-build-after.log
+time-of-build-before.log
+time-of-build-both.log
+time-of-build-pretty.log
+>>>>>>> f2/main
