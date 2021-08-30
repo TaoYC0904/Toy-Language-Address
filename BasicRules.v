@@ -513,6 +513,48 @@ Proof.
   tauto.
 Qed.
 
+Lemma invariantjoin : forall st1 st2 st l P pi,
+  stateJ st1 st2 st ->
+  snd st2 l = Some (inr (pi, Some tt, P)) -> 
+  exists pi', snd st l = Some (inr (pi', Some tt, P)).
+Proof.
+  intros.
+  ufStatej H. destruct H.
+  ufHeapj H1. specialize (H1 l). rewrite ufoptionj in H1.
+  destruct H1 as [? | [? | [? | ?]]].
+  + destruct H1 as [? [? ?]]. rewrite H2 in H0. inversion H0.
+  + destruct H1 as [? [? [? ?]]]. rewrite H2 in H0; inversion H0.
+    subst. eexists; exact H3.
+  + destruct H1 as [? [? [? ?]]]. rewrite H2 in H0; inversion H0.
+  + destruct H1 as [v1 [v2 [v [? [? [? ?]]]]]].
+    unfold QZandLock_Join in H4. rewrite ufsumj in H4.
+    destruct H4.
+    { destruct H4 as [? [? [? [? [? [? ?]]]]]].
+      subst. rewrite H2 in H0; inversion H0. }
+    destruct H4 as [vr1 [vr2 [vr [? [? [? ?]]]]]]. subst.
+    rewrite H2 in H0. inversion H0. subst.
+    destruct vr1 as ((pi1, x), P1).
+    destruct vr as ((pi12, x12), PP).
+    unfold lock_Join in H7.
+    unfold OSAGenerators.prod_Join in H7.
+    unfold SeparationAlgebra.join in H7.
+    unfold lock1_Join, lock2_Join in H7. destruct H7.
+    unfold OSAGenerators.equiv_Join in H5.
+    unfold snd in H5; destruct H5; subst.
+    unfold OSAGenerators.prod_Join in H4.
+    unfold SeparationAlgebra.join in H4.
+    unfold optionunit_Join in H4. destruct H4.
+    unfold OSAGenerators.option_Join in H5. unfold snd, fst in H5.
+    rewrite ufoptionj in H5.
+    destruct H5 as [? | [? | [? | ?]]].
+    - destruct H5 as [? [? ?]]. inversion H6.
+    - destruct H5 as [? [? [? ?]]]. inversion H6; subst.
+      eexists; exact H3.
+    - destruct H5 as [? [? [? ?]]]. inversion H6. 
+    - destruct H5 as [? [? [? [? [? [? ?]]]]]].
+      unfold OSAGenerators.trivial_Join in H8. contradiction.
+Qed.
+
 Theorem release_rule_sound : forall l P P' Q Q' pi,
   P = DeepintoShallow P' ->
   Q = DeepintoShallow Q' ->
@@ -521,7 +563,114 @@ Proof.
   unfold valid; intros.
   split.
   { unfold not; intros.
-    simpl in H2.
+    ufSepcon H1. destruct H1 as [st11 [st12 [? [[st121 [st122 [? [? ?]]]] ?]]]].
+    unfold readytoRelease in H4. destruct H4.
+    assert (exists pi', snd st12 l = Some (inr (pi', Some tt, P'))).
+    { ufStatej H5. destruct H5.
+      ufHeapj H8. specialize (H8 l). rewrite ufoptionj in H8.
+      destruct H8 as [? | [? | [? | ?]]].
+      + destruct H8 as [? [? ?]]. rewrite H9 in H4. inversion H4.
+      + destruct H8 as [v [? [? ?]]]. rewrite H9 in H4. inversion H4. subst.
+        exists pi. tauto.
+      + destruct H8 as [v [? [? ?]]]. rewrite H9 in H4. inversion H4.
+      + destruct H8 as [v1 [v2 [v [? [? [? ?]]]]]].
+        rewrite H9 in H4; inversion H4; subst.
+        unfold QZandLock_Join in H11. rewrite ufsumj in H11.
+        destruct H11.
+        { destruct H as [? [? [? [? [? [? ?]]]]]]. inversion H0. }
+        destruct H as [vr1 [vr2 [vr [? [? [? ?]]]]]].
+        inversion H0; subst.
+        destruct vr1 as ((pi1, x1), P1).
+        destruct vr as ((pi12, x12), PP).
+        unfold lock_Join in H12. unfold OSAGenerators.prod_Join in H12.
+        unfold SeparationAlgebra.join in H12.
+        unfold lock1_Join, lock2_Join in H12. destruct H12.
+        unfold OSAGenerators.equiv_Join in H11. destruct H11.
+        unfold snd in H11, H12. subst.
+        unfold OSAGenerators.prod_Join in H.
+        unfold SeparationAlgebra.join in H. destruct H.
+        unfold optionunit_Join in H11. unfold snd, fst in H11.
+        rewrite ufoptionj in H11. 
+        destruct H11 as [? | [? | [? | ?]]].
+        - destruct H11 as [? [? ?]]. inversion H12.
+        - destruct H11 as [? [? [? ?]]].
+          inversion H12. subst.
+          eexists; exact H10.
+        - destruct H11 as [? [? [? ?]]]. inversion H12. 
+        - destruct H11 as [? [? [? [? [? [? ?]]]]]].
+          unfold OSAGenerators.trivial_Join in H14. contradiction. }
+    destruct H8 as [pi' ?].
+    assert (exists pi'', snd st1 l = Some (inr (pi'', Some tt, P'))).
+    { ufStatej H6. destruct H6.
+      ufHeapj H9. specialize (H9 l). rewrite ufoptionj in H9.
+      destruct H9 as [? | [? | [? | ?]]].
+      + destruct H9 as [? [? ?]]. rewrite H10 in H8. inversion H8.
+      + destruct H9 as [v [? [? ?]]]. 
+        rewrite H10 in H8. inversion H8. subst.
+        eexists. exact H11.
+      + destruct H9 as [v [? [? ?]]].
+        rewrite H10 in H8. inversion H8.
+      + destruct H9 as [v1 [v2 [v [? [? [? ?]]]]]].
+        rewrite H10 in H8. inversion H8; subst.
+        unfold QZandLock_Join in H12. rewrite ufsumj in H12.
+        destruct H12.
+        { destruct H as [? [? [? [? [? [? ?]]]]]]. inversion H0. }
+        destruct H as [vr1 [vr2 [vr [? [? [? ?]]]]]]. 
+        inversion H0; subst.
+        destruct vr1 as ((pi1, x1), P1).
+        destruct vr as ((pi12, x12), PP).
+        unfold lock_Join in H13. unfold OSAGenerators.prod_Join in H13.
+        unfold SeparationAlgebra.join in H13.
+        unfold lock1_Join, lock2_Join in H13.
+        destruct H13.
+        unfold OSAGenerators.equiv_Join in H12.
+        unfold snd in H12; destruct H12. subst.
+        unfold OSAGenerators.prod_Join in H.
+        unfold SeparationAlgebra.join in H.
+        destruct H. 
+        unfold optionunit_Join in H12. unfold snd, fst in H12.
+        rewrite ufoptionj in H12.
+        destruct H12 as [? | [? | [? | ?]]].
+        - destruct H12 as [? [? ?]]. inversion H13.
+        - destruct H12 as [? [? [? ?]]].
+          inversion H13. subst.
+          eexists; exact H11.
+        - destruct H12 as [? [? [? ?]]]. inversion H13.
+        - destruct H12 as [? [? [? [? [? [? ?]]]]]].
+          unfold OSAGenerators.trivial_Join in H15. tauto. }
+    destruct H9 as [pi'' ?].
+    simpl in H2. rewrite H9 in H2.
+    unfold not in H2; apply H2.
+    exists st11, st12. split; [tauto|].
+    subst. unfold DeepintoShallow in *; tauto. }
+  split.
+  { intros. simpl in H2.
+    destruct H2 as [st11 [st12 [st121 [st122 [st21 [st22 [PP [? [? [? [? [? [? [? ?]]]]]]]]]]]]]].
+    ufsepcon. exists st21, st22.
+    split. { subst. unfold DeepintoShallow. tauto. }
+    split; [| tauto].
+    unfold hasLock.
+    unfold hasLock_sem in H9. split; [| tauto].
+    ufSepcon H1.
+    destruct H1 as [st11' [st12' [? ?]]].
+    destruct H10 as [[st121' [st122' [? [? ?]]]] ?].
+    unfold readytoRelease in H11.
+    unfold readytoRelease_sem in H7.
+    destruct H11, H7.
+    pose proof (invariantjoin _ _ _ _ _ _ H12 H11).
+    destruct H16 as [? ?].
+    pose proof (invariantjoin _ _ _ _ _ _ H13 H16).
+    destruct H17.
+    pose proof (invariantjoin _ _ _ _ _ _ H3 H7).
+    destruct H18.
+    pose proof (invariantjoin _ _ _ _ _ _ H2 H18).
+    destruct H19.
+    rewrite H17 in H19.
+    inversion H19. subst. try tauto. }
+  simpl; tauto.
+Qed.
+
+
 
 
 (* Theorem release_rule_sound : forall l P P' Q Q' pi,
