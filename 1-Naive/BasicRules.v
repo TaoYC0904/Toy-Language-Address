@@ -1,4 +1,5 @@
-Require Import Toy.Naive.Imp.
+Require Import ZArith.
+Require Import Toy.Naive.lib.
 Require Import Toy.Naive.Language.
 Require Import Toy.Naive.Embeddings.
 Require Import Toy.Naive.usl.implementation.
@@ -13,7 +14,7 @@ Proof.
   intros P st1 st2 HP.
   split; try split; try split.
   + unfold not; simpl; tauto.
-  + intros Hc. simpl in Hc; subst; tauto.
+  + intros Hc. simpl in Hc. unfold BinRel.id in *. subst. tauto.
   + intros Hc. simpl in Hc; tauto. 
   + intros Hc. simpl in Hc; tauto.
 Qed.
@@ -25,7 +26,7 @@ Proof.
   split; try split; try split.
   + unfold not; simpl; tauto.
   + intros Hc. simpl in Hc; tauto.
-  + intros Hc. simpl in Hc; subst; tauto.
+  + intros Hc. simpl in Hc. unfold BinRel.id in *. subst. tauto.
   + intros Hc. simpl in Hc; tauto.
 Qed.
 
@@ -36,7 +37,7 @@ Proof.
   + unfold not; simpl; tauto.
   + intros Hc. simpl in Hc; tauto.
   + intros Hc. simpl in Hc; tauto.
-  + intros Hc. simpl in Hc; subst; tauto.
+  + intros Hc. simpl in Hc. unfold BinRel.id in *. subst. tauto.
 Qed.
 
 Theorem hoare_seq_sound : forall P Q R Rb Rc c1 c2,
@@ -93,109 +94,75 @@ Proof.
     specialize (IHb1 s); specialize (IHb2 s); tauto.
 Qed.
 
-Theorem hoare_if_sound : forall P Q Rb Rc b c1 c2,
+Theorem if_rule_sound : forall P Q Rb Rc b c1 c2,
   valid (andp P (inj b)) c1 Q Rb Rc ->
-  valid (andp P (negp (inj b))) c2 Q Rb Rc ->
+  valid (andp P (inj (BNot b))) c2 Q Rb Rc ->
   valid (andp P (safeb b)) (CIf b c1 c2) Q Rb Rc.
 Proof.
-  unfold valid.
-  intros P Q Rb Rc b c1 c2 HT HF.
-  intros st1 st2 ?.
-  unfold andp, safeb in H.
-  destruct H as [HP HSafe].
-  split; try split; try split.
-  + unfold not; intros.
-    simpl in H. destruct H as [? | [? | ?]].
-    - tauto.
-    - assert (andp P (inj b) st1).
-      { unfold andp, inj. tauto. }
-      specialize (HT st1 st2 H0); tauto.
-    - assert (andp P (negp (inj b)) st1).
-      { unfold andp, negp, inj. 
-        split; try tauto.
-        unfold not; intros.
-        eapply (true_false_contradiction b st1); tauto. }
-      specialize (HF st1 st2 H0); tauto.
-  + intros Hc.
-    simpl in Hc.
-    destruct Hc as [[Hc1 Hc2] | [Hc1 Hc2]].
-    - assert (andp P (inj b) st1).
-      { unfold andp, inj. tauto. }
-      specialize (HT st1 st2). tauto.
-    - assert (andp P (negp (inj b)) st1).
-      { unfold andp, negp, inj.
-        split; try tauto.
-        unfold not; intros.
-        eapply (true_false_contradiction b st1); tauto. }
-      specialize (HF st1 st2); tauto.
-  + intros Hc.
-    simpl in Hc.
-    destruct Hc as [[Hc1 Hc2] | [Hc1 Hc2]].
-    - assert (andp P (inj b) st1).
-      { unfold andp, inj. tauto. }
-      specialize (HT st1 st2). tauto.
-    - assert (andp P (negp (inj b)) st1).
-      { unfold andp, negp, inj.
-        split; try tauto.
-        unfold not; intros.
-        eapply (true_false_contradiction b st1); tauto. }
-      specialize (HF st1 st2); tauto.
-  + intros Hc.
-    simpl in Hc.
-    destruct Hc as [[Hc1 Hc2] | [Hc1 Hc2]].
-    - assert (andp P (inj b) st1).
-      { unfold andp, inj. tauto. }
-      specialize (HT st1 st2). tauto.
-    - assert (andp P (negp (inj b)) st1).
-      { unfold andp, negp, inj.
-        split; try tauto.
-        unfold not; intros.
-        eapply (true_false_contradiction b st1); tauto. }
-      specialize (HF st1 st2); tauto.
-Qed.
+    unfold valid, andp, inj, safeb; intros.
+    specialize (H st1 st2). specialize (H0 st1 st2).
+    split; try split; try split.
+    + unfold not; intros.
+      simpl in H2. unfold Sets.union, Sets.intersect in H2.
+      tauto.
+    + simpl; intros.
+      unfold BinRel.union, BinRel.concat, BinRel.testrel in H2.
+      destruct H2 as [[st1' ?] | [st1' ?]]; destruct H2 as [[? ?] ?];
+      subst; tauto.
+    + simpl; intros.
+      unfold BinRel.union, BinRel.concat, BinRel.testrel in H2.
+      destruct H2 as [[st1' ?] | [st1' ?]]; destruct H2 as [[? ?] ?];
+      subst; tauto.
+    + simpl; intros.
+      unfold BinRel.union, BinRel.concat, BinRel.testrel in H2.
+      destruct H2 as [[st1' ?] | [st1' ?]]; destruct H2 as [[? ?] ?];
+      subst; tauto.
+  Qed.
 
-Theorem hoare_for_sound : forall P P' Q c ci,
+  Theorem for_rule_sound : forall P P' Q c ci,
   valid P c P' Q P' ->
   valid P' ci P falsep falsep ->
   valid P (CFor c ci) Q falsep falsep.
 Proof.
-  intros P P' Q c ci Hlb Hinc.
-  unfold valid in *.
-  intros st1 st2 HP.
-  split; try split; try split.
-  + unfold not; intros.
-    simpl in H; destruct H as [n ?].
-    revert st1 HP H; induction n.
-    - intros st1 HP H.
-      simpl in H. destruct H.
-      * specialize (Hlb st1 st2); tauto.
-      * destruct H as [st' ?].
-        specialize (Hlb st1 st'); specialize (Hinc st' st2); tauto.
-    - intros st1 HP H.
-      simpl in H.
-      destruct H as [st3 [[? | ?] ?]].
-      * destruct H as [st4 [? ?]].
-        specialize (Hlb st1 st4); specialize (Hinc st4 st3).
-        specialize (IHn st3); tauto.
-      * destruct H as [st4 [? ?]].
-        specialize (Hlb st1 st4); specialize (Hinc st4 st3).
-        specialize (IHn st3); tauto.
-  + intros Hc.
-    simpl in Hc; destruct Hc as [n Hc].
-    revert st1 HP Hc; induction n.
-    - intros st1 HP H.
-      simpl in H; destruct H as [? | [st3 ?]].
-      * specialize (Hlb st1 st2); tauto.
-      * specialize (Hlb st1 st3); specialize (Hinc st3 st2); tauto.
-    - intros st1 HP H.
-      simpl in H; destruct H as [st3 [[[st4 [? ?]] | [st4 [? ?]]] ?]].
-      * specialize (Hlb st1 st4); specialize (Hinc st4 st3).
-        specialize (IHn st3); tauto.
-      * specialize (Hlb st1 st4); specialize (Hinc st4 st3).
-        specialize (IHn st3); tauto.
-  + simpl; tauto.
-  + simpl; tauto.
-Qed. 
+  unfold valid; intros.
+  split.
+  { unfold not; intros. simpl in H2.
+    unfold Sets.omega_union in H2.
+    destruct H2 as [n ?].
+    revert st1 H1 H2; induction n; intros.
+    + simpl in *. unfold Sets.union, BinRel.dia in H2.
+      destruct H2 as [? | [st' [? ?]]].
+      - specialize (H st1 st2 H1); tauto.
+      - specialize (H st1 st' H1); destruct H as [? [? [? ?]]].
+        specialize (H0 st' st2 (H4 H2)); tauto.
+    + simpl in H2. unfold BinRel.dia, BinRel.union, BinRel.concat in H2.
+      destruct H2 as [st3 [[? | ? ] ?]].
+      - destruct H2 as [st4 [? ?]].
+        specialize (H st1 st4 H1). destruct H as [? [? [? ?]]].
+        specialize (H0 st4 st3 (H5 H2)). 
+        specialize (IHn st3). tauto.
+      - destruct H2 as [st4 [? ?]].
+        specialize (H st1 st4).
+        specialize (H0 st4 st3).
+        specialize (IHn st3). tauto. }
+  split.
+  { simpl; intros.
+    unfold BinRel.omega_union in H2.
+    destruct H2 as [n ?].
+    revert st1 H1 H2; induction n; intros.
+    + simpl in H2. unfold BinRel.union, BinRel.concat in H2.
+      destruct H2 as [? | [st' [? ?]]].
+      - specialize (H st1 st2); tauto.
+      - specialize (H st1 st').
+        specialize (H0 st' st2); tauto.
+    + simpl in H2. unfold BinRel.concat, BinRel.union in H2.
+      destruct H2 as [st3 [[? | ?] ?]];
+      destruct H2 as [st4 [? ?]];
+        specialize (H st1 st4);
+        specialize (H0 st4 st3);
+        specialize (IHn st3); tauto. }
+  simpl; tauto.
+Qed.
 
 Theorem hoare_consequence_sound : forall P P' Q Q' Rb Rb' Rc Rc' c,
   derives P P' ->

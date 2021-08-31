@@ -23,18 +23,38 @@ naive:
 	@$(COQC) $(COQ_FLAG) ./1-Naive/unifysl-interface/interface.v
 	@echo COQC ./1-Naive/unifysl-interface/implementation.v
 	@$(COQC) $(COQ_FLAG) ./1-Naive/unifysl-interface/implementation.v
-# @echo COQC ./1-Naive/Imp.v
-# @$(COQC) $(COQ_FLAG) ./1-Naive/Imp.v
 	@echo COQC ./1-Naive/Language.v
 	@$(COQC) $(COQ_FLAG) ./1-Naive/Language.v
 	@echo COQC ./1-Naive/Embeddings.v
 	@$(COQC) $(COQ_FLAG) ./1-Naive/Embeddings.v
-# @echo COQC ./1-Naive/BasicRules.v
-# @$(COQC) $(COQ_FLAG) ./1-Naive/BasicRules.v
+	@echo COQC ./1-Naive/BasicRules.v
+	@$(COQC) $(COQ_FLAG) ./1-Naive/BasicRules.v
 
 fp:
-	
+	@echo COQC ./2-FP/lib.v
+	@$(COQC) $(COQ_FLAG) ./2-FP/lib.v
+	@echo COQC ./2-FP/unifysl-interface/interface.v
+	@$(COQC) $(COQ_FLAG) ./2-FP/unifysl-interface/interface.v
+	@echo COQC ./2-FP/unifysl-interface/implementation.v
+	@$(COQC) $(COQ_FLAG) ./2-FP/unifysl-interface/implementation.v
+	@echo COQC ./2-FP/Language.v
+	@$(COQC) $(COQ_FLAG) ./2-FP/Language.v
 
+cc:
+	@echo COQC ./3-Concurrency/lib.v
+	@$(COQC) $(COQ_FLAG) ./3-Concurrency/lib.v
+	@echo COQC ./3-Concurrency/type.v
+	@$(COQC) $(COQ_FLAG) ./3-Concurrency/type.v
+	@echo COQC ./3-Concurrency/unifysl-interface/interface.v
+	@$(COQC) $(COQ_FLAG) ./3-Concurrency/unifysl-interface/interface.v
+	@echo COQC ./3-Concurrency/unifysl-interface/implementation.v
+	@$(COQC) $(COQ_FLAG) ./3-Concurrency/unifysl-interface/implementation.v
+	@echo COQC ./3-Concurrency/Language.v
+	@$(COQC) $(COQ_FLAG) ./3-Concurrency/Language.v
+	@echo COQC ./3-Concurrency/Embeddings.v
+	@$(COQC) $(COQ_FLAG) ./3-Concurrency/Embeddings.v
+	@echo COQC ./3-Concurrency/BasicRules.v
+	@$(COQC) $(COQ_FLAG) ./3-Concurrency/BasicRules.v
 
 # 	@echo COQC lib.v
 # 	@$(COQC) $(COQ_FLAG) lib.v

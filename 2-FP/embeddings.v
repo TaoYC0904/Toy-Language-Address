@@ -45,7 +45,7 @@ Definition valid (P : Assertion) (c : com) (Q Rb Rc : Assertion) : Prop :=
 
 End Validity.
 
-Module tacticsforUnifySL.
+(* Module tacticsforUnifySL.
 Ltac UFsepcon' := unfold sepcon; unfold SepCon. 
 Ltac UFsepcon H := unfold sepcon in H; unfold SepCon in H.
 Ltac UFjoin' := unfold stateJ; unfold OSAGenerators.prod_Join; unfold SeparationAlgebra.join.
@@ -64,7 +64,7 @@ Proof.
 	unfold OSAGenerators.fun_Join.
 	unfold SeparationAlgebra.join.
 	unfold OSAGenerators.option_Join.
-	unfold OSAGenerators.option_join.
+	unfold OSAGenerators.option_join. *)
 
 
 

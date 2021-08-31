@@ -2,9 +2,9 @@ Require Import ZArith.
 Require Import QArith.
 Require Import Lqa.
 Require Import Coq.micromega.Psatz.
-Require Import Toy.UnifySL.interface.
-Require Import Toy.lib.
-Require Import Toy.type.
+Require Import Toy.CC.usl.interface.
+Require Import Toy.CC.lib.
+Require Import Toy.CC.type.
 Require Import Logic.SeparationLogic.Model.SeparationAlgebra.
 Require Import Logic.SeparationLogic.Model.OrderedSA.
 Require Import Logic.SeparationLogic.Model.OSAGenerators.

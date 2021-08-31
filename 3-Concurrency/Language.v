@@ -1,9 +1,9 @@
 (* Require Import Toy.UnifySL.implementation. *)
 Require Import ZArith.
 Require Import QArith.
-Require Import Toy.lib.
-Require Import Toy.type.
-Require Import Toy.UnifySL.implementation.
+Require Import Toy.CC.lib.
+Require Import Toy.CC.type.
+Require Import Toy.CC.usl.implementation.
 Import T.
 Open Scope Z.
 

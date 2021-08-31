@@ -1,7 +1,7 @@
 Require Import ZArith.
 Require Import QArith.
 Require Import Coq.micromega.Psatz.
-Require Import Toy.lib.
+Require Import Toy.CC.lib.
 Open Scope Z.
 
 Definition var : Type := nat.

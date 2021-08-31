@@ -1,8 +1,9 @@
-Require Import Toy.UnifySL.implementation.
-Require Import Toy.Imp.
-Require Import Toy.Language.
-Require Import Toy.Embeddings.
-Require Import Toy.BasicRules.
+Require Import ZArith.
+Require Import Toy.Naive.usl.implementation.
+(* Require Import Toy.Imp. *)
+Require Import Toy.Naive.Language.
+Require Import Toy.Naive.Embeddings.
+Require Import Toy.Naive.BasicRules.
 Require Import Coq.Lists.List.
 Import T.
 Import Denote_Aexp Denote_Bexp Denote_Com.

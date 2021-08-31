@@ -1,10 +1,10 @@
 Require Import ZArith.
 Require Import QArith.
-Require Import Toy.lib.
-Require Import Toy.type.
-Require Import Toy.UnifySL.implementation.
-Require Import Toy.Language.
-Require Import Toy.Embeddings.
+Require Import Toy.CC.lib.
+Require Import Toy.CC.type.
+Require Import Toy.CC.usl.implementation.
+Require Import Toy.CC.Language.
+Require Import Toy.CC.Embeddings.
 Require Import Coq.micromega.Psatz.
 Require Import Lqa.
 Open Scope Z.
@@ -670,9 +670,6 @@ Proof.
   simpl; tauto.
 Qed.
 
-
-
-
 (* Theorem release_rule_sound : forall l P P' Q Q' pi,
   P = DeepintoShallow P' ->
   Q = DeepintoShallow Q' ->
@@ -795,11 +792,4 @@ Proof.
     split; try tauto.
      *)
     
-          
-          
-
-
-
-
-
-
+End BasicRulesSound. 

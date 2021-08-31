@@ -1,9 +1,9 @@
 Require Import ZArith.
 Require Import QArith.
-Require Import Toy.UnifySL.implementation.
-Require Import Toy.lib.
-Require Import Toy.type.
-Require Import Toy.Language.
+Require Import Toy.CC.usl.implementation.
+Require Import Toy.CC.lib.
+Require Import Toy.CC.type.
+Require Import Toy.CC.Language.
 Import T.
 Import Denote_Aexp Denote_Bexp Denote_Term Denote_Assertion_D Denote_Com.
 
