@@ -1,6 +1,8 @@
+(* 1- Naive *)
+Require Import ZArith.
+Require Import Toy.Naive.lib.
 Require Import Coq.Lists.List.
-Require Import Toy.Imp.
-Require Import Toy.UnifySL.implementation.
+Require Import Toy.Naive.usl.implementation.
 Import T.
 Open Scope Z.
 
@@ -98,16 +100,6 @@ Definition opt_test (R : Z -> Z -> Prop) (X Y : state -> option Z) : bexp_denote
       | _, _ => True 
     end; |}.
 
-Module Sets.
-
-Definition union {A : Type} (X Y : A -> Prop) : A -> Prop :=
-  fun a => X a \/ Y a.
-    
-Definition omega_union {A} (X : nat -> A -> Prop) : A -> Prop :=
-  fun a => exists n, X n a.
-    
-End Sets.
-
 Module Denote_Bexp.
 Import Denote_Aexp.
 
@@ -162,30 +154,30 @@ Import Denote_Aexp.
 Import Denote_Bexp.
 
 Definition skip_sem : com_denote := {|
-  com_normal := fun st1 st2 => st1 = st2;
-  com_break := fun st1 st2 => False;
-  com_cont := fun st1 st2 => False;
-  com_error := fun st => False; |}.
+  com_normal := BinRel.id;
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
+  com_error := Sets.empty |}.
 
 Definition break_sem : com_denote := {|
-  com_normal := fun st1 st2 => False;
-  com_break := fun st1 st2 => st1 = st2;
-  com_cont := fun st1 st2 => False;
-  com_error := fun st => False; |}.
+  com_normal := BinRel.empty; 
+  com_break := BinRel.id;
+  com_cont := BinRel.empty;
+  com_error := Sets.empty |}.
 
 Definition cont_sem : com_denote := {|
-  com_normal := fun st1 st2 => False;
-  com_break := fun st1 st2 => False;
-  com_cont := fun st1 st2 => st1 = st2;
-  com_error := fun st => False; |}.
+  com_normal := BinRel.empty;
+  com_break := BinRel.empty;
+  com_cont := BinRel.id;
+  com_error := Sets.empty |}.
 
 Definition load_sem (X : var) (DA : state -> option Z) : com_denote := {|
   com_normal := fun st1 st2 => match DA st1 with
     | Some n => (fst st2 X = n) /\ (forall Y, Y <> X -> fst st2 Y = fst st1 Y) /\ (snd st1 = snd st2)
     | None => False
   end;
-  com_break := fun st1 st2 => False;
-  com_cont := fun st1 st2 => False;
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
   com_error := fun st => (DA st) = None; |}.
   
 Definition store_sem (DAL DAR : state -> option Z) : com_denote := {|
@@ -194,26 +186,36 @@ Definition store_sem (DAL DAR : state -> option Z) : com_denote := {|
         (forall p', p <> p' -> snd st2 p' = snd st1 p') /\ (fst st1 = fst st2)
     | _, _ => False 
   end;
-  com_break := fun st1 st2 => False;
-  com_cont := fun st1 st2 => False;
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
   com_error := fun st => match DAL st, DAR st with
     | Some p, Some v => snd st p = None
     | _, _ => True 
   end; |}.
 
-  Definition seq_sem (DC1 DC2 : com_denote) : com_denote := {|
-  com_normal := fun st1 st2 =>
-    exists st3, com_normal DC1 st1 st3 /\ com_normal DC2 st3 st2;
-  com_break := fun st1 st2 =>
-    (com_break DC1 st1 st2) \/
-    (exists st3, com_normal DC1 st1 st3 /\ com_break DC2 st3 st2);
-  com_cont := fun st1 st2 =>
-    (com_cont DC1 st1 st2) \/
-    (exists st3, com_normal DC1 st1 st3 /\ com_cont DC2 st3 st2);
-  com_error := fun st =>
-    (com_error DC1 st) \/ (exists st', com_normal DC1 st st' /\ com_error DC2 st'); |}.
+Definition seq_sem (DC1 DC2 : com_denote) : com_denote := {|
+  com_normal := BinRel.concat (com_normal DC1) (com_normal DC2);
+    (* exists st3, com_normal DC1 st1 st3 /\ com_normal DC2 st3 st2; *)
+  com_break := BinRel.union (com_break DC1) (BinRel.concat (com_normal DC1) (com_break DC2));
+    (* (com_break DC1 st1 st2) \/
+    (exists st3, com_normal DC1 st1 st3 /\ com_break DC2 st3 st2); *)
+  com_cont := BinRel.union (com_cont DC1) (BinRel.concat (com_normal DC1) (com_cont DC2));
+    (* (com_cont DC1 st1 st2) \/
+    (exists st3, com_normal DC1 st1 st3 /\ com_cont DC2 st3 st2); *)
+  com_error := Sets.union (com_error DC1) (BinRel.dia (com_normal DC1) (com_error DC2)) |}.
+    (* (com_error DC1 st) \/ (exists st', com_normal DC1 st st' /\ com_error DC2 st'); |}. *)
   
 Definition if_sem (DB : bexp_denote) (DC1 DC2 : com_denote) : com_denote := {|
+  com_normal := BinRel.union (BinRel.concat (BinRel.testrel (true_set DB)) (com_normal DC1))
+    (BinRel.concat (BinRel.testrel (false_set DB)) (com_normal DC2));
+  com_break := BinRel.union (BinRel.concat (BinRel.testrel (true_set DB)) (com_break DC1))
+    (BinRel.concat (BinRel.testrel (false_set DB)) (com_break DC2));
+  com_cont := BinRel.union (BinRel.concat (BinRel.testrel (true_set DB)) (com_cont DC1))
+    (BinRel.concat (BinRel.testrel (false_set DB)) (com_cont DC2));
+  com_error := Sets.union (error_set DB) 
+    (Sets.union (Sets.intersect (true_set DB) (com_error DC1)) (Sets.intersect (false_set DB) (com_error DC2)))|}.
+
+(* Definition if_sem (DB : bexp_denote) (DC1 DC2 : com_denote) : com_denote := {|
   com_normal := fun st1 st2 => 
     (true_set DB st1 /\ com_normal DC1 st1 st2) \/
     (false_set DB st1 /\ com_normal DC2 st1 st2);
@@ -226,9 +228,35 @@ Definition if_sem (DB : bexp_denote) (DC1 DC2 : com_denote) : com_denote := {|
   com_error := fun st =>
     (error_set DB st) \/
     (true_set DB st /\ com_error DC1 st) \/
-    (false_set DB st /\ com_error DC2 st); |}.
+    (false_set DB st /\ com_error DC2 st); |}. *)
 
-Fixpoint iter_loop_body (DC1 DC2 : com_denote) (n : nat) : com_denote :=
+Fixpoint iter_loop_body (DC1 DC2 : com_denote) (n : nat) : com_denote := match n with
+  | O => {|
+      com_normal := BinRel.union (com_break DC1) (BinRel.concat (com_normal DC1) (com_break DC2));
+      com_break := BinRel.empty;
+      com_cont := BinRel.empty;
+      com_error := Sets.union (com_error DC1) (BinRel.dia (com_normal DC1) (com_error DC2)) |}
+  | S n' => {|
+      com_normal := BinRel.concat 
+        (BinRel.union (BinRel.concat (com_normal DC1) (com_normal DC2)) 
+          (BinRel.concat (com_cont DC1) (com_normal DC2))) 
+        (com_normal (iter_loop_body DC1 DC2 n'));
+      com_break := BinRel.empty;
+      com_cont := BinRel.empty;
+      com_error := BinRel.dia 
+        (BinRel.union (BinRel.concat (com_normal DC1) (com_normal DC2)) 
+          (BinRel.concat (com_cont DC1) (com_normal DC2))) 
+        (com_error (iter_loop_body DC1 DC2 n')) |}
+end.
+
+Definition for_sem (DC1 DC2 : com_denote) : com_denote := {|
+  com_normal := BinRel.omega_union (fun n => com_normal (iter_loop_body DC1 DC2 n));
+  com_break := BinRel.empty;
+  com_cont := BinRel.empty;
+  com_error := Sets.omega_union (fun n => com_error (iter_loop_body DC1 DC2 n)) |}.
+
+
+(* Fixpoint iter_loop_body (DC1 DC2 : com_denote) (n : nat) : com_denote :=
   match n with
   | O => {|
       com_normal := fun st1 st2 =>
@@ -258,7 +286,7 @@ Definition for_sem (DC1 DC2 : com_denote) : com_denote := {|
   com_break := fun st1 st2 => False;
   com_cont := fun st1 st2 => False;
   com_error := fun st =>
-    exists n, com_error (iter_loop_body DC1 DC2 n) st |}.
+    exists n, com_error (iter_loop_body DC1 DC2 n) st |}. *)
 
 Fixpoint ceval (c : com) : com_denote :=
   match c with

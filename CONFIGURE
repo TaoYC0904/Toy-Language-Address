@@ -1,3 +1,13 @@
-LIB_DIR = ./lib 
-INTER_DIR = ./unifysl-interface
+CURRENT_DIR = .
+
+NAIVE_DIR = ./1-Naive 
+NAIVE_LIB_DIR = ./1-Naive/lib 
+NAIVE_USL_DIR = ./1-Naive/unifysl-interface 
+
+FP_DIR = ./2-FP 
+FP_USL_DIR = ./2-FP/unifysl-interface 
+
+CC_DIR = ./3-Concurrency
+CC_USL_DIR = ./3-Concurrency/unifysl-interface 
+
 LOGIC_DIR = ../qinxiang-unifysl

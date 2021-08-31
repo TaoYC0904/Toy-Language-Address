@@ -1,7 +1,7 @@
-Require Import Toy.Imp.
-Require Import Toy.Language.
-Require Import Toy.Embeddings.
-Require Import Toy.UnifySL.implementation.
+Require Import Toy.Naive.Imp.
+Require Import Toy.Naive.Language.
+Require Import Toy.Naive.Embeddings.
+Require Import Toy.Naive.usl.implementation.
 
 Module BasicRulesSound.
 Import Validity Assertion_Shallow Denote_Aexp Denote_Bexp Denote_Com.

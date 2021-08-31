@@ -1,9 +1,1 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
--Q . Toy -Q ./lib Toy.lib -Q ./unifysl-interface Toy.UnifySL -R ../qinxiang-unifysl Logic
-=======
--Q . FP -Q ./unifysl-interface FP.UnifySL -R ../qinxiang-unifysl Logic
->>>>>>> f2/main
-=======
--Q . Toy -Q ./unifysl-interface Toy.UnifySL -R ../qinxiang-unifysl Logic
->>>>>>> f3/main
+-Q . Toy -Q ./1-Naive  Toy.Naive -Q ./1-Naive/unifysl-interface  Toy.Naive.usl -Q ./2-FP  Toy.FP -Q ./2-FP/unifysl-interface  Toy.FP.usl -Q ./3-Concurrency Toy.CC -Q ./3-Concurrency/unifysl-interface  Toy.CC.usl -R ../qinxiang-unifysl Logic 
