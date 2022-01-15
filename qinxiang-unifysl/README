@@ -1,0 +1,55 @@
+This library contains three parts: logics, a logic generator and Hoare logics.
+
+============================================
+
+Logics.
+
+You can find basic logic settings, propositional logics and separation logics
+in the following folders:
+    GeneralLogic
+    MinimumLogic
+    PropositionalLogic
+    SeparationLogic
+You can find formalized proof theories, semantic definitions, soundness
+proofs and completeness proofs. The library is built-up in an extensible
+style, using Coq's typeclasses and higher-order features. But at the same
+time, we also provide several concrete examples, containing both shallow
+embeddings and deep embeddings.
+
+============================================
+
+Logic Generator.
+
+The folder "LogicGenerator" contains our development about this
+generator. It requires users to provide a configuration file. Then a command
+line can be used to generate an interface file:
+    ./logic_gen CONFIGURATION_FILE INTERFACE_FILE
+The configuration file should specify involved connectives and primary proof
+rules. The interface file will contain a Module Type (where these connectives
+and proof rules are specified) and a Module functor which generate many many
+derived rules from primary ones. See LogicGenerator/demo for more information.
+
+============================================
+
+Hoare Logics.
+
+This part is not quite complete. It contains some elementary results about Hoare
+logic soundness, especially those about concurrent separation logic.
+
+============================================
+
+Dependency: Coq 8.10
+
+============================================
+
+How to install.
+
+Run "make" or "make -j7" for parallel in your command line. A CONFIGURE file
+may be needed for setting up COQBIN.
+
+============================================
+
+Open Source.
+
+This library is NOT open sourced for now.
+

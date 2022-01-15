@@ -106,8 +106,90 @@ Proof.
   destruct H as [st1 [st2 ?]]. tauto.
 Qed.
 
+Lemma ufoptionj : forall {A : Type} (J : SeparationAlgebra.Join A) (a1 a2 a : option A) , 
+  @OSAGenerators.option_join A J a1 a2 a <->
+  (a1 = None /\ a2 = None /\ a = None) \/
+  (exists v, a1 = None /\ a2 = Some v /\ a = Some v) \/
+  (exists v, a1 = Some v /\ a2 = None /\ a = Some v) \/
+  (exists v1 v2 v, a1 = Some v1 /\ a2 = Some v2 /\ a = Some v /\ J v1 v2 v).
+Proof.
+  unfold iff; split; intros.
+  + destruct H.
+    - left; tauto.
+    - right; left; exists a; tauto.
+    - right; right; left; exists a; tauto.
+    - right; right; right. exists a,b,c; tauto.
+  + destruct H as [? | [? | [? | ?]]].
+    - destruct H as [? [? ?]]. rewrite H, H0, H1; constructor.
+    - destruct H as [v [? [? ?]]]. rewrite H, H0, H1; constructor.
+    - destruct H as [v [? [? ?]]]. rewrite H, H0, H1; constructor.
+    - destruct H as [v1 [v2 [v [? [? [? ?]]]]]].
+      rewrite H, H0, H1; constructor; tauto.
+Qed.
+
+Lemma ufsumj : forall {A B : Type} (J1 : SeparationAlgebra.Join A) (J2 : SeparationAlgebra.Join B) (a1 a2 a : A + B),
+  @OSAGenerators.sum_join A B J1 J2 a1 a2 a <->
+  (exists al1 al2 al, a1 = inl al1 /\ a2 = inl al2 /\ a = inl al /\ J1 al1 al2 al) \/
+  (exists ar1 ar2 ar, a1 = inr ar1 /\ a2 = inr ar2 /\ a = inr ar /\ J2 ar1 ar2 ar).
+Proof.
+  unfold iff; split; intros.
+  + destruct H.
+    - left; exists a, b, c; tauto.
+    - right; exists a, b, c; tauto.
+  + destruct H.
+    - destruct H as [al1 [al2 [al [? [? [? ?]]]]]].
+      rewrite H, H0, H1. constructor; tauto.
+    - destruct H as [ar1 [ar2 [ar [? [? [? ?]]]]]].
+      rewrite H, H0, H1. constructor; tauto.
+Qed.
+
 Lemma sepcon_comm_impp : (forall x y : expr, provable (impp (sepcon x y) (sepcon y x))) .
-Admitted.
+Proof.
+  intros.
+  unfold provable, impp, sepcon.
+  unfold SepCon. intros.
+  destruct H as [st1 [st2 [? [? ?]]]].
+  exists st2, st1. split; [tauto|]. split; [tauto|].
+  unfold stateJ in *. unfold prod_Join in *.
+  destruct H1. split.
+  + clear H2. unfold join in *. unfold storeJ in *.
+    unfold equiv_Join in *. tauto.
+  + clear H1. unfold join in *. unfold heapJ in *.
+    unfold fun_Join in *. intros p0. specialize (H2 p0).
+    unfold join in *. unfold option_Join in *. rewrite ufoptionj in *.
+    destruct H2 as [? | [? | [? | ?]]].
+    - left. tauto.
+    - right. right. left. destruct H1 as [v0 ?]. exists v0. tauto.
+    - right. left. destruct H1 as [v0 ?]. exists v0. tauto.
+    - right. right. right. destruct H1 as [v1 [v2 [v ?]]].
+      exists v2, v1, v. split; try split; try split; try tauto.
+      destruct H1 as [? [? [? ?]]]. clear H1 H2 H3.
+      unfold QZandLock_Join in *. rewrite ufsumj in *.
+      destruct H4 as [? | ?].
+      * left. destruct H1 as [al1 [al2 [al ?]]].
+        exists al2, al1, al. split; try split; try split; try tauto.
+        destruct H1 as [? [? [? ?]]].
+        clear H1 H2 H3. unfold QZ_Join in *. unfold prod_Join in *.
+        split.
+        ++ destruct H4. unfold join in *. unfold Q_Join in *. lra.
+        ++ destruct H4. unfold join in *. unfold Z_Join in *. unfold equiv_Join in *. tauto.
+      * right. destruct H1 as [ar1 [ar2 [ar ?]]].
+        exists ar2, ar1, ar. split; try split; try split; try tauto.
+        destruct H1 as [? [? [? ?]]]. clear H1 H2 H3.
+        unfold lock_Join in *. unfold prod_Join in *.
+        split.
+        ++ destruct H4. unfold join in *. unfold lock1_Join in *. unfold prod_Join in *.  split.
+          -- unfold join in *. unfold Q_Join in *. lra.
+          -- unfold join in *. unfold optionunit_Join in *. unfold option_Join in *. 
+            destruct H1. rewrite ufoptionj in *.
+            destruct H3 as [? | [? | [? | ?]]].
+            ** left. tauto.
+            ** destruct H3 as [vv ?]. right. right. left. exists vv. tauto.
+            ** destruct H3 as [vv ?]. right. left. exists vv. tauto.
+            ** destruct H3 as [? [? [? [? [? [? ?]]]]]]. unfold trivial_Join in *. tauto.
+        ++ destruct H4. unfold join in *. unfold lock2_Join in *. unfold equiv_Join in *. try tauto.
+Qed.
+
 (* Proof.
   intros x y.
   pose proof (@sound_sepcon_comm L _ _ (Build_Model state) (unit_kMD _) tt stateR stateJ stateSA (Pred_SM _) (Pred_kminSM _) (Pred_fsepconSM _) x y).
